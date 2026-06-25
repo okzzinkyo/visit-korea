@@ -1,0 +1,54 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+}
+
+.icon {
+  padding: 0 14px 0 18px;
+  color: var(--color-sub);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  height: 52px;
+  border: none;
+  padding: 0 4px;
+  font-size: 14px;
+  color: var(--color-text);
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+}
+
+.input::placeholder {
+  color: var(--color-sub);
+}
+
+.btn {
+  height: 52px;
+  padding: 0 28px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 0 12px 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.btn:hover {
+  background: var(--color-primary-dark);
+}

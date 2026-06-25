@@ -1,0 +1,913 @@
+.page {
+  min-height: 100vh;
+  background: var(--bg-page);
+}
+
+/* ===========================
+   메인 레이아웃
+=========================== */
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 24px 48px;
+}
+
+.backRow {
+  margin-bottom: 20px;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  background: var(--bg-card);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-sub);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.backBtn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-tint);
+}
+
+/* 2컬럼 그리드 */
+.detailGrid {
+  display: grid;
+  grid-template-columns: 40% 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* ===========================
+   왼쪽 컬럼
+=========================== */
+.spotImage {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 18px;
+}
+
+.spotImageOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to top, rgba(2, 21, 55, 0.45) 0%, transparent 100%);
+}
+
+.spotTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.spotName {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1.3;
+  margin: 0;
+}
+
+.levelImg {
+  width: auto;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.spotAddress {
+  font-size: 13px;
+  color: var(--color-sub);
+  margin: 3px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.spotParkingRow {
+  margin-bottom: 14px;
+}
+
+.btnParking {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  background: var(--color-secondary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.btnParking:hover {
+  background: var(--color-secondary-dark);
+  box-shadow: 0 4px 14px rgba(245, 82, 32, 0.25);
+}
+
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.tag {
+  padding: 4px 10px;
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.spotDescWrap {
+  position: relative;
+}
+
+.spotDesc {
+  font-size: 14px;
+  color: var(--color-sub);
+  line-height: 1.7;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.spotDescExpanded {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.btnMore {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: none;
+  border: none;
+  padding: 4px 0;
+  margin-top: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-block;
+}
+
+.btnMore:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+}
+
+/* ===========================
+   오른쪽 컬럼
+=========================== */
+.colRight {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  padding: 24px 24px 20px;
+  position: sticky;
+  top: 80px; /* 헤더 높이(64px) + 여백 */
+}
+
+.forecastHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.dateRangeLabel {
+  font-size: 12px;
+  color: var(--color-sub);
+  font-weight: 500;
+  padding: 6px 10px;
+  background: var(--bg-page);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  white-space: nowrap;
+}
+
+/* 7일 그리드 */
+.weekGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.dayCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  transition: background 0.15s;
+  position: relative;
+}
+
+.dayCell:hover {
+  background: var(--color-primary-tint);
+}
+
+/* 오늘 날짜는 tooltip 내 뱃지로만 표시 */
+
+.dayLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.dayLabelWeekend {
+  color: #e53e3e;
+}
+
+.dayDate {
+  font-size: 10px;
+  color: var(--color-sub);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.dayLevelImg {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.dayLevelLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.festivalDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-secondary);
+  flex-shrink: 0;
+}
+
+/* 다음 주 구분선 */
+.nextWeekHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 14px;
+}
+
+.divider {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.nextWeekLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-sub);
+  white-space: nowrap;
+}
+
+/* 축제 배너 */
+.festivalNotice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.festivalItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--color-secondary-tint);
+  border-left: 3px solid var(--color-secondary);
+  border-radius: 8px;
+}
+
+.festivalItemIcon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.festivalItemName {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.festivalItemPeriod {
+  font-size: 11px;
+  color: var(--color-sub);
+  margin-top: 1px;
+}
+
+/* 요일별 혼잡 패턴 */
+.patternSection {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
+}
+
+.patternHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.patternTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.patternSub {
+  font-size: 11px;
+  color: var(--color-sub);
+}
+
+.patternInsight {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.chipBusy {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(245, 82, 32, 0.1);
+  color: var(--color-secondary);
+}
+
+.chipCalm {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(8, 139, 255, 0.1);
+  color: var(--color-primary);
+}
+
+/* 세로 바 차트 */
+.vchartBars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: flex-end;
+  gap: 4px;
+  height: 72px;
+  margin-bottom: 4px;
+}
+
+.vchartCol {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+}
+
+.vchartBar {
+  width: 55%;
+  border-radius: 4px 4px 0 0;
+}
+
+.vchartLabels {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 6px;
+}
+
+.vchartLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.vchartLabelDay {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.vchartLabelDayWeekend {
+  color: #e53e3e;
+}
+
+.vchartLabelLv {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* ===========================
+   대체 관광지 / 함께 가기
+=========================== */
+.sectionAlt,
+.sectionRelated {
+  margin-top: 56px;
+  padding-top: 48px;
+  border-top: 1px solid var(--color-border);
+}
+
+.alertBanner {
+  background: var(--color-secondary-tint);
+  border: 1px solid rgba(245, 82, 32, 0.15);
+  border-radius: var(--radius-btn);
+  padding: 13px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-secondary-dark);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sectionTitleMain {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.btnRefresh {
+  background: none;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-size: 16px;
+  color: var(--color-sub);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s;
+}
+
+.btnRefresh:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-tint);
+}
+
+/* 카드 그리드 */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+/* 추천 카드 */
+.recCard {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.recCard::before {
+  content: '';
+  display: block;
+  height: 4px;
+  background: linear-gradient(90deg, #088bff, #49c2ff);
+}
+
+.recCard:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-3px);
+}
+
+.recCardImgWrap {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.recCardBg {
+  width: 100%;
+  height: 100%;
+}
+
+.recCardTag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text);
+  padding: 4px 9px;
+}
+
+.recCardLevelImg {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+}
+
+.recCardInfo {
+  padding: 10px 12px 12px;
+}
+
+.recCardLoc {
+  font-size: 11px;
+  color: var(--color-sub);
+  font-weight: 500;
+  margin: 0 0 2px;
+}
+
+.recCardName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* 날짜 범위 관련 */
+.selectedRangeLabel {
+  font-size: 12px;
+  color: var(--color-sub);
+  margin-bottom: 14px;
+  font-weight: 500;
+}
+
+.weekSectionLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.weekDateRange {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-sub);
+}
+
+.weekDateRangeSub {
+  font-size: 11px;
+  color: var(--color-sub);
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+/* 빈 셀 (범위 밖) */
+.dayCellEmpty {
+  opacity: 0.3;
+}
+
+.dayLevelEmpty {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--color-sub);
+}
+
+/* 셀 hover/active */
+.dayCellActive {
+  background: var(--color-primary-tint);
+  border-radius: 10px;
+}
+
+/* 툴팁 */
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  z-index: 50;
+  background: var(--bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  padding: 10px 12px;
+  min-width: 148px;
+  pointer-events: none;
+}
+
+.tooltipCenter {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tooltipLeft {
+  left: 0;
+  transform: none;
+}
+
+.tooltipRight {
+  right: 0;
+  transform: none;
+}
+
+.tooltipArrow {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 10px;
+  height: 10px;
+  background: var(--bg-card);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tooltipHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tooltipLevelImg {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.tooltipDate {
+  font-size: 11px;
+  color: var(--color-sub);
+  font-weight: 500;
+  margin: 0 0 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tooltipTodayBadge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-primary-tint);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.tooltipLevelLabel {
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.tooltipBarRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tooltipBar {
+  flex: 1;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.tooltipRate {
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+  width: 34px;
+  text-align: right;
+}
+
+.tooltipBarFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.tooltipFestivals {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-border);
+}
+
+.tooltipFestivalItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+}
+
+.tooltipFestivalName {
+  color: var(--color-secondary-dark);
+  font-weight: 600;
+}
+
+/* 축제 도트 */
+.festivalDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-secondary);
+  flex-shrink: 0;
+}
+
+/* 축제 있는 셀 — hover 툴팁 */
+.dayCellFestival {
+  position: relative;
+}
+
+.dayCellFestival[data-festival]::after {
+  content: attr(data-festival);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 35, 66, 0.88);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 5px 9px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 20;
+}
+
+.dayCellFestival[data-festival]:hover::after {
+  opacity: 1;
+}
+
+/* 축제 안내 배너 */
+.festivalNotice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+  margin-bottom: 4px;
+}
+
+.festivalItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--color-secondary-tint);
+  border-left: 3px solid var(--color-secondary);
+  border-radius: 8px;
+}
+
+.festivalIcon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.festivalName {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.festivalPeriod {
+  font-size: 11px;
+  color: var(--color-sub);
+  margin: 1px 0 0;
+}
+
+/* 스켈레톤 로딩 */
+.dayCellSkeleton {
+  gap: 6px;
+  cursor: default;
+}
+
+.skeletonLine {
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e8edf2 25%, #f4f7fb 50%, #e8edf2 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+}
+
+.skeletonCircle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #e8edf2 25%, #f4f7fb 50%, #e8edf2 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ===========================
+   반응형
+=========================== */
+@media (max-width: 900px) {
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+  .cardGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .main {
+    padding: 16px 14px 36px;
+  }
+  .spotName {
+    font-size: 18px;
+  }
+  .cardGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .weekGrid {
+    gap: 2px;
+  }
+  .dayCell {
+    padding: 7px 2px;
+  }
+  .dayLabel {
+    font-size: 11px;
+  }
+  .dayDate {
+    font-size: 9px;
+  }
+  .dayLevelImg {
+    width: 24px;
+    height: 24px;
+  }
+  .dayLevelLabel {
+    font-size: 9px;
+  }
+  .colRight {
+    padding: 16px 14px;
+  }
+}

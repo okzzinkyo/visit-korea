@@ -1,0 +1,260 @@
+.wrap {
+  position: relative;
+  display: inline-block;
+}
+
+/* 트리거 버튼 */
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  background: var(--bg-page);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-sub);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  user-select: none;
+}
+
+.triggerActive {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-tint);
+}
+
+.trigger:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.calIcon {
+  flex-shrink: 0;
+  color: inherit;
+}
+
+/* 팝업 */
+.popup {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 200;
+  background: var(--bg-card);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-md);
+  padding: 16px;
+  min-width: 280px;
+  animation: popIn 0.15s ease;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 안내 텍스트 */
+.hint {
+  font-size: 11px;
+  color: var(--color-sub);
+  text-align: center;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  background: var(--color-primary-tint);
+  border-radius: 8px;
+}
+
+.hintHighlight {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* 월 네비게이션 */
+.monthNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.navBtn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  color: var(--color-sub);
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.navBtn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-tint);
+}
+
+.navBtn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.monthLabel {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+/* 요일 헤더 */
+.dayNames {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.dayNameCell {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-sub);
+  padding: 4px 0;
+}
+
+.dayNameCellWeekend {
+  color: #e53e3e;
+}
+
+/* 날짜 그리드 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cell {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--color-text);
+  transition: background 0.1s, color 0.1s;
+  user-select: none;
+}
+
+/* 비어 있는 셀 (이전 달) */
+.cellEmpty {
+  cursor: default;
+}
+
+/* 비활성화 (날짜 범위 밖) */
+.cellDisabled {
+  color: #c0c9d0;
+  cursor: default;
+  font-weight: 400;
+}
+
+/* 오늘 */
+.cellToday::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+/* hover */
+.cell:not(.cellDisabled):not(.cellEmpty):hover {
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
+}
+
+/* 시작/종료 선택됨 */
+.cellStart,
+.cellEnd {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+  border-radius: 8px;
+}
+
+.cellStart::after,
+.cellEnd::after {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+/* 범위 내 */
+.cellInRange {
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
+  border-radius: 0;
+}
+
+/* 범위 시작 행 처리 */
+.cellStart { border-radius: 8px; }
+.cellEnd   { border-radius: 8px; }
+
+/* 선택 범위 확인 버튼 */
+.confirmRow {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btnReset {
+  padding: 7px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  background: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-sub);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.btnReset:hover {
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+}
+
+.btnConfirm {
+  padding: 7px 16px;
+  border: none;
+  border-radius: var(--radius-btn);
+  background: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.btnConfirm:hover {
+  background: var(--color-primary-dark);
+}
+
+.btnConfirm:disabled {
+  background: #c0d4ef;
+  cursor: default;
+}
