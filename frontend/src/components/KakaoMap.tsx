@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCongestionLevel, getLevelColor, getLevelImage, getLevelLabel } from '../utils/congestion';
+import type { DistrictResponse } from '../types/api';
+import LoadingOverlay from './LoadingOverlay';
 import styles from './KakaoMap.module.css';
 
 interface DistrictFeature {
@@ -13,7 +15,7 @@ interface DistrictFeature {
 }
 
 interface Props {
-  congestionData: Record<string, number>;
+  districts: DistrictResponse[];
 }
 
 function toLatLngPaths(geometry: DistrictFeature['geometry']): kakao.maps.LatLng[][] {
@@ -50,19 +52,47 @@ function computeCentroid(geometry: DistrictFeature['geometry']): { lat: number; 
 const INITIAL_CENTER = { lat: 35.1796, lng: 129.0756 };
 const INITIAL_LEVEL  = 9;
 
-export default function KakaoMap({ congestionData }: Props) {
+export default function KakaoMap({ districts }: Props) {
   const containerRef  = useRef<HTMLDivElement>(null);
   const popupRef      = useRef<HTMLDivElement>(null);
   const popupNameRef  = useRef<HTMLDivElement>(null);
   const popupBadgeRef = useRef<HTMLSpanElement>(null);
   const popupImgRef   = useRef<HTMLImageElement>(null);
+  const popupRecommendRef     = useRef<HTMLDivElement>(null);
+  const popupRecommendNameRef = useRef<HTMLParagraphElement>(null);
   const resetBtnRef   = useRef<HTMLButtonElement>(null);
 
-  const navigate       = useNavigate();
-  const congestionRef  = useRef(congestionData);
-  const navigateRef    = useRef(navigate);
-  useEffect(() => { congestionRef.current = congestionData; }, [congestionData]);
-  useEffect(() => { navigateRef.current  = navigate; },      [navigate]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const navigate      = useNavigate();
+  const districtsRef  = useRef<Map<string, DistrictResponse>>(new Map());
+  const polygonsRef   = useRef<Map<string, kakao.maps.Polygon>>(new Map());
+  const baseColorRef  = useRef<Map<string, string>>(new Map());
+  const boundsRef     = useRef<kakao.maps.LatLngBounds | null>(null);
+  const geojsonRef    = useRef<{ features: DistrictFeature[] } | null>(null);
+  const builtRef      = useRef(false);
+  const buildPolygonsRef = useRef<(() => void) | null>(null);
+  const navigateRef   = useRef(navigate);
+  useEffect(() => { navigateRef.current = navigate; }, [navigate]);
+
+  // districts 갱신 시 처리 — 폴리곤이 아직 없으면(GeoJSON·혼잡도 데이터가 둘 다
+  // 준비된 시점에) 실제 색으로 처음 그리고, 이미 있으면 색만 다시 칠한다.
+  // 기본색(0%)으로 먼저 그렸다가 나중에 다시 칠하는 깜빡임을 막기 위함.
+  useEffect(() => {
+    districtsRef.current = new Map(districts.map(d => [d.districtCode, d]));
+
+    if (!builtRef.current) {
+      if (geojsonRef.current && districtsRef.current.size > 0) buildPolygonsRef.current?.();
+      return;
+    }
+
+    polygonsRef.current.forEach((polygon, code) => {
+      const rate  = districtsRef.current.get(code)?.congestion.score ?? 0;
+      const color = getLevelColor(getCongestionLevel(rate));
+      baseColorRef.current.set(code, color);
+      polygon.setOptions({ fillColor: color });
+    });
+  }, [districts]);
 
   useEffect(() => {
     const kakao = window.kakao;
@@ -76,11 +106,22 @@ export default function KakaoMap({ congestionData }: Props) {
       disableDoubleClickZoom: true,
     });
 
-    // 초기 위치 복귀 버튼
+    // setBounds에 전달한 범위는 컨테이너 크기/비율과 무관하게 항상 전부 보이는 것이
+    // 보장되므로, boundsRef에는 본토 영역만 담아 불필요하게 확대 축소되지 않게 한다
+    // (강서구의 가덕도 같은 부속 섬까지 포함하면 그만큼 더 축소돼야 해서 전체적으로 작아 보인다).
+    const fitBounds = () => {
+      if (boundsRef.current) map.setBounds(boundsRef.current, 40, 40, 40, 40);
+    };
+
+    // 초기 위치 복귀 버튼 — GeoJSON 로드 전이면 고정 중심/레벨로, 로드 후면 부산 전체 범위로 복귀
     if (resetBtnRef.current) {
       resetBtnRef.current.onclick = () => {
-        map.setCenter(new kakao.maps.LatLng(INITIAL_CENTER.lat, INITIAL_CENTER.lng));
-        map.setLevel(INITIAL_LEVEL);
+        if (boundsRef.current) {
+          fitBounds();
+        } else {
+          map.setCenter(new kakao.maps.LatLng(INITIAL_CENTER.lat, INITIAL_CENTER.lng));
+          map.setLevel(INITIAL_LEVEL);
+        }
       };
     }
 
@@ -93,16 +134,37 @@ export default function KakaoMap({ congestionData }: Props) {
     };
     window.addEventListener('mousemove', onMouseMove);
 
-    fetch('/busan_districts.geojson')
-      .then(r => r.json())
-      .then((geojson: { features: DistrictFeature[] }) => {
-        geojson.features.forEach(feature => {
+    // 생성 시점에 컨테이너가 최종 레이아웃 크기로 자리잡기 전이면 지도 캔버스가
+    // 그 크기로 굳어버리므로, 레이아웃이 안정된 다음 프레임에 한 번 재계산한다.
+    requestAnimationFrame(() => map.relayout());
+
+    // 화면/창 크기 변경 시에도 항상 부산 전체가 보이도록 재조정
+    const onResize = () => {
+      map.relayout();
+      fitBounds();
+    };
+    window.addEventListener('resize', onResize);
+
+    const buildPolygons = () => {
+      const geojson = geojsonRef.current;
+      if (!geojson) return;
+
+      const bounds = new kakao.maps.LatLngBounds();
+
+      geojson.features.forEach(feature => {
           const { code, name } = feature.properties;
           const paths = toLatLngPaths(feature.geometry);
 
-          const rate      = congestionRef.current[code] ?? 0;
+          // fit 범위는 폴리곤 윤곽 전체가 아니라 "구 이름 라벨" 위치만 기준으로 삼는다.
+          // 도형이 화면 밖으로 살짝 잘리는 건 괜찮고, 라벨과 hover 가능 영역만
+          // 항상 보이면 되므로 — 훨씬 타이트하게(확대되게) 잡을 수 있다.
+          const centroid = computeCentroid(feature.geometry);
+          bounds.extend(new kakao.maps.LatLng(centroid.lat, centroid.lng));
+
+          const rate      = districtsRef.current.get(code)?.congestion.score ?? 0;
           const level     = getCongestionLevel(rate);
           const fillColor = getLevelColor(level);
+          baseColorRef.current.set(code, fillColor);
 
           const polygon = new kakao.maps.Polygon({
             map,
@@ -113,22 +175,12 @@ export default function KakaoMap({ congestionData }: Props) {
             strokeWeight: 1.5,
             strokeOpacity: 0.9,
           });
+          polygonsRef.current.set(code, polygon);
 
-          // 구 이름 라벨 — 폴리곤 중심에 고정
-          const centroid = computeCentroid(feature.geometry);
-          new kakao.maps.CustomOverlay({
-            map,
-            position: new kakao.maps.LatLng(centroid.lat, centroid.lng),
-            content: `<div style="
-              font-size:11px;font-weight:700;color:#111;
-              pointer-events:none;white-space:nowrap;
-              text-shadow:0 0 4px #fff,0 0 4px #fff,0 0 4px #fff,0 0 4px #fff;
-            ">${name}</div>`,
-            zIndex: 2,
-          });
-
-          kakao.maps.event.addListener(polygon, 'mouseover', () => {
-            const r     = congestionRef.current[code] ?? 0;
+          // 폴리곤과 라벨 모두에서 동일하게 반응하도록 핸들러를 한 번만 정의해 공유
+          const handleMouseOver = () => {
+            const district = districtsRef.current.get(code);
+            const r     = district?.congestion.score ?? 0;
             const lv    = getCongestionLevel(r);
             const color = getLevelColor(lv);
 
@@ -144,26 +196,74 @@ export default function KakaoMap({ congestionData }: Props) {
               popupImgRef.current.src = getLevelImage(lv);
               popupImgRef.current.alt = getLevelLabel(lv);
             }
+            const rec = district?.recommendedPlace;
+            if (popupRecommendNameRef.current) popupRecommendNameRef.current.textContent = rec?.name ?? '';
+            if (popupRecommendRef.current) {
+              popupRecommendRef.current.style.backgroundImage = rec?.imageUrl ? `url(${rec.imageUrl})` : 'none';
+            }
             popupRef.current?.classList.add(styles.popupVisible);
-          });
+          };
 
-          kakao.maps.event.addListener(polygon, 'mouseout', () => {
-            polygon.setOptions({ fillColor, fillOpacity: 0.55, strokeWeight: 1.5 });
+          const handleMouseOut = () => {
+            polygon.setOptions({ fillColor: baseColorRef.current.get(code) ?? fillColor, fillOpacity: 0.55, strokeWeight: 1.5 });
             popupRef.current?.classList.remove(styles.popupVisible);
-          });
+          };
 
-          kakao.maps.event.addListener(polygon, 'click', () => {
+          const handleClick = () => {
             navigateRef.current(`/list?district=${code}`);
+          };
+
+          kakao.maps.event.addListener(polygon, 'mouseover', handleMouseOver);
+          kakao.maps.event.addListener(polygon, 'mouseout', handleMouseOut);
+          kakao.maps.event.addListener(polygon, 'click', handleClick);
+
+          // 구 이름 라벨 — 폴리곤 중심에 고정, 폴리곤과 동일한 hover/click 핸들러 부착
+          const labelEl = document.createElement('div');
+          labelEl.textContent = name;
+          labelEl.style.cssText = `
+            font-size:11px;font-weight:700;color:#111;
+            cursor:pointer;white-space:nowrap;
+            text-shadow:0 0 4px #fff,0 0 4px #fff,0 0 4px #fff,0 0 4px #fff;
+          `;
+          labelEl.addEventListener('mouseenter', handleMouseOver);
+          labelEl.addEventListener('mouseleave', handleMouseOut);
+          labelEl.addEventListener('click', handleClick);
+
+          new kakao.maps.CustomOverlay({
+            map,
+            position: new kakao.maps.LatLng(centroid.lat, centroid.lng),
+            content: labelEl,
+            zIndex: 2,
           });
         });
-      });
 
-    return () => window.removeEventListener('mousemove', onMouseMove);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+      // 컨테이너 크기/해상도에 관계없이 모든 구 라벨이 항상 보이도록 범위 맞춤
+      boundsRef.current = bounds;
+      fitBounds();
+      builtRef.current = true;
+      setIsLoading(false);
+    };
+    buildPolygonsRef.current = buildPolygons;
+
+    fetch('/busan_districts.geojson')
+      .then(r => r.json())
+      .then((geojson: { features: DistrictFeature[] }) => {
+        geojsonRef.current = geojson;
+        if (districtsRef.current.size > 0) buildPolygons();
+      })
+      .catch(() => setIsLoading(false));
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
 
   return (
     <div className={styles.wrapper}>
       <div className={styles.map} ref={containerRef} />
+
+      {isLoading && <LoadingOverlay message="혼잡도 데이터를 불러오는 중..." />}
 
       {/* 초기 위치 복귀 */}
       <button className={styles.resetBtn} ref={resetBtnRef} title="처음 위치로">
@@ -176,11 +276,13 @@ export default function KakaoMap({ congestionData }: Props) {
         <div className={styles.popupLabel}>평균 혼잡도</div>
         <div className={styles.popupCrowdRow}>
           <span className={styles.popupBadge} ref={popupBadgeRef} />
-          <img  className={styles.popupImg}   ref={popupImgRef} src="" alt="" />
+          <img  className={styles.popupImg}   ref={popupImgRef} alt="" />
         </div>
         <div className={styles.popupDivider} />
         <div className={styles.popupRecommendLabel}>추천 여행지</div>
-        <div className={styles.popupRecommendPlaceholder} />
+        <div className={styles.popupRecommend} ref={popupRecommendRef}>
+          <p className={styles.popupRecommendName} ref={popupRecommendNameRef} />
+        </div>
       </div>
     </div>
   );

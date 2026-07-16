@@ -60,6 +60,7 @@ function buildWeekEntries(
       level: fd ? fd.level : null,
       rate: fd ? fd.rate : null,
       isToday: d.getTime() === today.getTime(),
+      // api 조회 후 축제 데이터 구분 값으로 유무 표기, 다른 객체로 축제 정보 받을 수 있음
       festivals: FESTIVALS.filter(f => f.districtId === districtId && d >= f.start && d <= f.end),
     };
   });
@@ -111,7 +112,9 @@ export default function DetailPage() {
     setIsLoading(true);
     try {
       const fetchEnd = new Date(start);
-      fetchEnd.setDate(start.getDate() + 13);
+      // TODO - 달력 선택 range + 7일로 변경 필요
+      // range 검색 결과가 예상 혼잡도 첫번째 ROW에 출력 되고, 이후 7일이 두번째 ROW에 출력
+      fetchEnd.setDate(start.getDate() + 13); 
       const data = await fetchCongestionForecast(spot.id, start, fetchEnd);
       setForecastData(data);
     } finally {
@@ -141,6 +144,9 @@ export default function DetailPage() {
   const weekdayAvg = useMemo(() => {
     const sums: Record<string, number> = {};
     const counts: Record<string, number> = {};
+    // TODO
+    // 지금은 날짜 변경 시, 변경된 날짜부터 혼잡 패턴을 다시 계산하는 느낌?
+    // 요일별 혼잡 패턴은 오늘 날짜부터 30일 예측 기준 평균 혼잡도 출력
     ORDERED_DAYS.forEach(d => { sums[d] = 0; counts[d] = 0; });
     forecastData.forEach(fd => {
       const name = DAY_NAMES[fd.date.getDay()];

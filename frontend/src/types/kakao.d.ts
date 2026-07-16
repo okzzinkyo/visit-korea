@@ -4,6 +4,9 @@ declare namespace kakao.maps {
     setCenter(latlng: LatLng): void;
     getCenter(): LatLng;
     setLevel(level: number): void;
+    getLevel(): number;
+    setBounds(bounds: LatLngBounds, paddingTop?: number, paddingRight?: number, paddingBottom?: number, paddingLeft?: number): void;
+    relayout(): void;
   }
 
   interface MapOptions {
@@ -19,6 +22,11 @@ declare namespace kakao.maps {
     constructor(lat: number, lng: number);
     getLat(): number;
     getLng(): number;
+  }
+
+  class LatLngBounds {
+    constructor(sw?: LatLng, ne?: LatLng);
+    extend(latlng: LatLng): void;
   }
 
   class Polygon {

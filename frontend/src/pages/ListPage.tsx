@@ -1,12 +1,30 @@
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import Header from '../components/Header';
 import SpotCard from '../components/SpotCard';
-import { DISTRICT_CONGESTION, DISTRICT_NAMES, LIST_SPOTS } from '../data/mockData';
+import LoadingOverlay from '../components/LoadingOverlay';
+import { fetchPlaces } from '../api/places';
 import { getCongestionLevel, getLevelColor } from '../utils/congestion';
 import styles from './ListPage.module.css';
 
-const DISTRICT_ENTRIES = Object.entries(DISTRICT_NAMES) as [string, string][];
+const PAGE_SIZE = 20;
+
+const SORT_OPTIONS = [
+  { value: 'NAME_ASC', label: '기본순' },
+  { value: 'CROWD_ASC', label: '혼잡도 낮은 순' },
+  { value: 'CROWD_DESC', label: '혼잡도 높은 순' },
+] as const;
+type SortValue = (typeof SORT_OPTIONS)[number]['value'];
+
+function buildPageWindow(current: number, totalPages: number, windowSize = 5) {
+  if (totalPages <= 0) return [];
+  const half = Math.floor(windowSize / 2);
+  let start = Math.max(0, current - half);
+  const end = Math.min(totalPages - 1, start + windowSize - 1);
+  start = Math.max(0, end - windowSize + 1);
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+}
 
 export default function ListPage() {
   const [searchParams] = useSearchParams();
@@ -16,7 +34,8 @@ export default function ListPage() {
   const submittedKeyword = searchParams.get('q') ?? '';
 
   const [searchInput, setSearchInput] = useState(() => submittedKeyword);
-  const [sort, setSort] = useState<'default' | 'crowd_asc' | 'crowd_desc'>('default');
+  const [sort, setSort] = useState<SortValue>('NAME_ASC');
+  const [page, setPage] = useState(0);
 
   const chipScrollRef = useRef<HTMLDivElement>(null);
   const dragState = useRef({ isDown: false, startX: 0, scrollLeft: 0, moved: false });
@@ -44,60 +63,35 @@ export default function ListPage() {
     if (chipScrollRef.current) chipScrollRef.current.style.cursor = 'grab';
   }, []);
 
-  const keywordFilteredSpots = useMemo(() => {
-    if (!submittedKeyword.trim()) return LIST_SPOTS;
-    const q = submittedKeyword.toLowerCase().trim();
-    return LIST_SPOTS.filter(s =>
-      s.name.toLowerCase().includes(q) ||
-      s.districtName.toLowerCase().includes(q) ||
-      s.tags.some(t => t.toLowerCase().includes(q))
-    );
-  }, [submittedKeyword]);
-
-  const filteredSpots = useMemo(() => {
-    const spots = activeCode
-      ? keywordFilteredSpots.filter(s => s.districtId === activeCode)
-      : keywordFilteredSpots;
-    const sorted = [...spots];
-    if (sort === 'crowd_asc') sorted.sort((a, b) => a.congestionRate - b.congestionRate);
-    if (sort === 'crowd_desc') sorted.sort((a, b) => b.congestionRate - a.congestionRate);
-    return sorted;
-  }, [keywordFilteredSpots, activeCode, sort]);
-
-  const visibleDistrictEntries = useMemo(() => {
-    if (!submittedKeyword.trim()) return DISTRICT_ENTRIES;
-    const codes = new Set(keywordFilteredSpots.map(s => s.districtId));
-    return DISTRICT_ENTRIES.filter(([code]) => codes.has(code));
-  }, [submittedKeyword, keywordFilteredSpots]);
-
-  const districtRate = activeCode ? (DISTRICT_CONGESTION[activeCode] ?? 0) : 0;
-  const showBanner = !!activeCode && districtRate >= 70 && !submittedKeyword;
-
-  const top3Calm = useMemo(
-    () =>
-      Object.entries(DISTRICT_CONGESTION)
-        .filter(([code]) => code !== activeCode)
-        .sort(([, a], [, b]) => a - b)
-        .slice(0, 3)
-        .map(([code, rate]) => ({ code, name: DISTRICT_NAMES[code], rate })),
-    [activeCode]
-  );
+  const { data, isPending, isError } = useQuery({
+    queryKey: ['places', submittedKeyword, activeCode, sort, page],
+    queryFn: () => fetchPlaces({
+      keyword: submittedKeyword || undefined,
+      districtCode: activeCode || undefined,
+      sort,
+      page,
+      size: PAGE_SIZE,
+    }),
+    placeholderData: keepPreviousData,
+  });
 
   const selectDistrict = (code: string) => {
     const params = new URLSearchParams();
     if (code) params.set('district', code);
     if (submittedKeyword) params.set('q', submittedKeyword);
     const search = params.toString();
+    setPage(0);
     navigate(search ? `/list?${search}` : '/list', { replace: true });
   };
 
   const handleSearch = () => {
     const q = searchInput.trim();
+    setPage(0);
     if (!q) {
       navigate('/list', { replace: true });
       return;
     }
-    const matchedCode = DISTRICT_ENTRIES.find(([, name]) => name === q)?.[0];
+    const matchedCode = data?.districtFacets.find(f => f.districtName === q)?.districtCode;
     if (matchedCode) {
       setSearchInput('');
       navigate(`/list?district=${matchedCode}`, { replace: true });
@@ -108,14 +102,42 @@ export default function ListPage() {
 
   const handleClear = () => {
     setSearchInput('');
+    setPage(0);
     navigate('/list', { replace: true });
   };
 
-  const resultLabel = activeCode
-    ? DISTRICT_NAMES[activeCode]
+  const handleSortChange = (value: SortValue) => {
+    setSort(value);
+    setPage(0);
+  };
+
+  const resultLabel = data?.selectedDistrict
+    ? data.selectedDistrict.districtName
     : submittedKeyword
     ? `"${submittedKeyword}"`
     : '전체';
+
+  const showBanner = data?.districtSuggestion.visible ?? false;
+  const districtRate = data?.districtSuggestion.selectedDistrict?.congestionScore ?? 0;
+  const top3Calm = data?.districtSuggestion.recommendedDistricts ?? [];
+
+  const items = data?.items ?? [];
+  const totalCount = data?.page.totalElements ?? 0;
+  const totalPages = data?.page.totalPages ?? 0;
+  const pageWindow = buildPageWindow(page, totalPages);
+
+  if (isError) {
+    return (
+      <div className={styles.page}>
+        <Header />
+        <div className={styles.content}>
+          <p style={{ color: 'var(--color-sub)', textAlign: 'center', marginTop: 80 }}>
+            관광지 목록을 불러오지 못했어요. 잠시 후 다시 시도해주세요.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -159,104 +181,127 @@ export default function ListPage() {
           <button className={styles.searchBtn} onClick={handleSearch}>검색</button>
         </div>
 
-        <div
-          className={styles.chipScroll}
-          ref={chipScrollRef}
-          onMouseDown={onChipMouseDown}
-          onMouseMove={onChipMouseMove}
-          onMouseUp={onChipMouseUp}
-          onMouseLeave={onChipMouseUp}
-        >
-          <button
-            className={`${styles.chip} ${!activeCode ? styles.chipActive : ''}`}
-            onClick={() => { if (!dragState.current.moved) selectDistrict(''); }}
+        <div className={styles.resultsArea}>
+          {isPending ? (
+          <LoadingOverlay message="관광지를 불러오는 중..." radius={16} />
+          ) : (
+          <>
+          <div
+            className={styles.chipScroll}
+            ref={chipScrollRef}
+            onMouseDown={onChipMouseDown}
+            onMouseMove={onChipMouseMove}
+            onMouseUp={onChipMouseUp}
+            onMouseLeave={onChipMouseUp}
           >
-            전체
-          </button>
-          {visibleDistrictEntries.map(([code, name]) => {
-            const rate = DISTRICT_CONGESTION[code] ?? 0;
-            const color = getLevelColor(getCongestionLevel(rate));
-            const isActive = activeCode === code;
-            return (
+            {(data?.districtFacets ?? []).map(facet => (
               <button
-                key={code}
-                className={`${styles.chip} ${isActive ? styles.chipActive : ''}`}
-                style={isActive ? { background: color, borderColor: color, color: '#fff' } : {}}
-                onClick={() => { if (!dragState.current.moved) selectDistrict(code); }}
+                key={facet.districtCode ?? 'all'}
+                className={`${styles.chip} ${facet.selected ? styles.chipActive : ''}`}
+                onClick={() => { if (!dragState.current.moved) selectDistrict(facet.districtCode ?? ''); }}
               >
-                {name}
-                <span
-                  className={styles.chipDot}
-                  style={{ background: isActive ? 'rgba(255,255,255,0.7)' : color }}
-                />
+                {facet.districtName}
+                <span className={styles.chipCount}>{facet.count}</span>
               </button>
-            );
-          })}
-        </div>
-
-        {showBanner && (
-          <div className={styles.banner}>
-            <div className={styles.bannerLeft}>
-              <span className={styles.bannerIcon}>😵</span>
-              <div>
-                <p className={styles.bannerTitle}>
-                  {DISTRICT_NAMES[activeCode]}는 지금 혼잡해요&nbsp;
-                  <span
-                    className={styles.bannerRate}
-                    style={{ color: getLevelColor(getCongestionLevel(districtRate)) }}
-                  >
-                    {districtRate}%
-                  </span>
-                </p>
-                <p className={styles.bannerSub}>지금 한적한 구 TOP3 — 눈치게임 성공 도전!</p>
-              </div>
-            </div>
-            <div className={styles.bannerChips}>
-              {top3Calm.map(({ code, name, rate }) => {
-                const color = getLevelColor(getCongestionLevel(rate));
-                return (
-                  <button
-                    key={code}
-                    className={styles.bannerChip}
-                    style={{ borderColor: color, color }}
-                    onClick={() => selectDistrict(code)}
-                  >
-                    {name}&nbsp;<b>{rate}%</b>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        <div className={styles.resultBar}>
-          <span className={styles.resultCount}>
-            <b>{resultLabel}</b> 관광지&nbsp;<b>{filteredSpots.length}개</b>
-          </span>
-          <select
-            className={styles.sortSelect}
-            value={sort}
-            onChange={e => setSort(e.target.value as typeof sort)}
-          >
-            <option value="default">기본순</option>
-            <option value="crowd_asc">혼잡도 낮은 순</option>
-            <option value="crowd_desc">혼잡도 높은 순</option>
-          </select>
-        </div>
-
-        {filteredSpots.length > 0 ? (
-          <div className={styles.grid}>
-            {filteredSpots.map(spot => (
-              <SpotCard key={spot.id} spot={spot} />
             ))}
           </div>
-        ) : (
-          <div className={styles.empty}>
-            <div className={styles.emptyIcon}>🔍</div>
-            <p className={styles.emptyText}>검색 결과가 없어요</p>
-            <p className={styles.emptySub}>다른 키워드나 구/군 이름으로 검색해보세요</p>
+
+          {showBanner && (
+            <div className={styles.banner}>
+              <div className={styles.bannerLeft}>
+                <span className={styles.bannerIcon}>😵</span>
+                <div>
+                  <p className={styles.bannerTitle}>
+                    {resultLabel}는 지금 혼잡해요&nbsp;
+                    <span
+                      className={styles.bannerRate}
+                      style={{ color: getLevelColor(getCongestionLevel(districtRate)) }}
+                    >
+                      {districtRate}%
+                    </span>
+                  </p>
+                  <p className={styles.bannerSub}>지금 한적한 구 TOP3 — 눈치게임 성공 도전!</p>
+                </div>
+              </div>
+              <div className={styles.bannerChips}>
+                {top3Calm.map(d => {
+                  const color = getLevelColor(getCongestionLevel(d.congestionScore));
+                  return (
+                    <button
+                      key={d.districtCode}
+                      className={styles.bannerChip}
+                      style={{ borderColor: color, color }}
+                      onClick={() => selectDistrict(d.districtCode)}
+                    >
+                      {d.districtName}&nbsp;<b>{d.congestionScore}%</b>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className={styles.resultBar}>
+            <span className={styles.resultCount}>
+              <b>{resultLabel}</b> 관광지&nbsp;<b>{totalCount}개</b>
+            </span>
+            <select
+              className={styles.sortSelect}
+              value={sort}
+              onChange={e => handleSortChange(e.target.value as SortValue)}
+            >
+              {SORT_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
           </div>
-        )}
+
+          {items.length > 0 ? (
+            <>
+              <div className={styles.grid}>
+                {items.map(place => (
+                  <SpotCard key={place.id} place={place} />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className={styles.pagination}>
+                  <button
+                    className={styles.pageBtn}
+                    disabled={page === 0}
+                    onClick={() => setPage(p => Math.max(0, p - 1))}
+                  >
+                    이전
+                  </button>
+                  {pageWindow.map(p => (
+                    <button
+                      key={p}
+                      className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ''}`}
+                      onClick={() => setPage(p)}
+                    >
+                      {p + 1}
+                    </button>
+                  ))}
+                  <button
+                    className={styles.pageBtn}
+                    disabled={!(data?.page.hasNext ?? false)}
+                    onClick={() => setPage(p => p + 1)}
+                  >
+                    다음
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className={styles.empty}>
+              <div className={styles.emptyIcon}>🔍</div>
+              <p className={styles.emptyText}>검색 결과가 없어요</p>
+              <p className={styles.emptySub}>다른 키워드나 구/군 이름으로 검색해보세요</p>
+            </div>
+          )}
+          </>
+          )}
+        </div>
       </div>
     </div>
   );
