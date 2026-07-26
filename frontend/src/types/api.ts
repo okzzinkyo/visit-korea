@@ -105,6 +105,85 @@ export interface PlaceCardResponse {
   last7DaysAverageCongestion: CongestionResponse;
 }
 
+export interface TodayCongestionResponse {
+  date: string;
+  score: number;
+  levelCode: string;
+  label: string;
+}
+
+export interface PlaceDetailResponse {
+  id: number;
+  name: string;
+  districtName: string;
+  category: string;
+  theme: string;
+  address: string;
+  imageUrl: string;
+  lat: number;
+  lng: number;
+  description: string;
+  todayCongestion: TodayCongestionResponse;
+  parkingSearchUrl: string;
+}
+
+export interface ForecastItemResponse {
+  date: string;
+  dayLabel: string;
+  monthDay: string;
+  congestion: CongestionResponse;
+  festivalIds: number[];
+}
+
+export interface ForecastPeriodResponse {
+  startDate: string;
+  endDate: string;
+  partial: boolean;
+  items: ForecastItemResponse[];
+}
+
+export interface PlaceForecastResponse {
+  placeId: number;
+  forecastBaseDate: string;
+  availablePeriod: DateRangeResponse;
+  selectedPeriod: ForecastPeriodResponse;
+  followingPeriod: ForecastPeriodResponse;
+  dataStatus: string;
+}
+
+export interface FestivalItemResponse {
+  id: number;
+  name: string;
+  placeName: string;
+  startDate: string;
+  endDate: string;
+  displayPeriodText: string;
+}
+
+export interface PlaceFestivalResponse {
+  placeId: number;
+  items: FestivalItemResponse[];
+}
+
+export interface CongestionPatternItemResponse {
+  dayOfWeek: string;
+  dayLabel: string;
+  averageCongestion: CongestionResponse;
+  patternLabel: string;
+}
+
+export interface CongestionPatternSummaryResponse {
+  relaxedDays: string[];
+  crowdedDays: string[];
+}
+
+export interface PlaceCongestionPatternResponse {
+  placeId: number;
+  period: { startDate: string | null; endDate: string | null };
+  items: CongestionPatternItemResponse[];
+  summary: CongestionPatternSummaryResponse;
+}
+
 export interface PlaceSearchResponse {
   keyword: string | null;
   selectedDistrict: SelectedDistrictResponse | null;

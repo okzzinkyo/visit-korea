@@ -1,27 +1,31 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import Header from '../components/Header';
 import DateRangePicker from '../components/DateRangePicker';
-import { LIST_SPOTS, FESTIVALS } from '../data/mockData';
-import type { Festival } from '../data/mockData';
-import { getLevelColor, getLevelImage, getLevelLabel } from '../utils/congestion';
+import LoadingOverlay from '../components/LoadingOverlay';
+import { getCongestionLevel, getLevelColor, getLevelImage, getLevelLabel } from '../utils/congestion';
 import { getSpotGradient } from '../utils/spotGradient';
-import { fetchCongestionForecast } from '../api/forecast';
-import type { ForecastDay } from '../api/forecast';
+import { fetchPlaceCongestionPattern, fetchPlaceDetail, fetchPlaceFestivals, fetchPlaceForecast } from '../api/places';
+import type { FestivalItemResponse, ForecastItemResponse } from '../types/api';
 import type { CongestionLevel } from '../types';
 import styles from './DetailPage.module.css';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
-const ORDERED_DAYS = ['월', '화', '수', '목', '금', '토', '일'];
 const WEEKENDS = new Set(['토', '일']);
+const FESTIVAL_ICON = '🎉';
 
 const LEVEL_LABELS_SHORT: Record<CongestionLevel, string> = {
   1: '눈치성공', 2: '여유', 3: '보통', 4: '혼잡', 5: '눈치실패',
 };
 
-const BAR_HEIGHTS: Record<CongestionLevel, number> = {
-  1: 20, 2: 40, 3: 60, 4: 80, 5: 100,
-};
+// TODO: 대체 스팟/함께 가기 좋아요 관련 API 연동 전까지 자리만 유지
+interface RecPlace {
+  id: number;
+  name: string;
+  districtName: string;
+  level: CongestionLevel;
+}
 
 type DayEntry = {
   day: string;
@@ -29,7 +33,7 @@ type DayEntry = {
   level: CongestionLevel | null;
   rate: number | null;
   isToday: boolean;
-  festivals: Festival[];
+  festivals: FestivalItemResponse[];
 };
 
 function startOfDay(d: Date) {
@@ -38,41 +42,85 @@ function startOfDay(d: Date) {
   return r;
 }
 
-function fmtDate(d: Date) {
-  return `${d.getMonth() + 1}.${d.getDate()}`;
+function toISODate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
-function buildWeekEntries(
-  rangeStart: Date,
-  forecastData: ForecastDay[],
-  weekOffset: number,
-  districtId: string,
+function parseISODate(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+// 백엔드는 오늘 날짜의 dayLabel을 요일 대신 "오늘" 문자열로 내려주므로, 요일이 꼭 필요한 곳(주말 판정·툴팁)은 직접 계산한다
+function weekdayOf(dateStr: string): string {
+  return DAY_NAMES[parseISODate(dateStr).getDay()];
+}
+
+function daysBetween(start: Date, end: Date): number {
+  return Math.round((startOfDay(end).getTime() - startOfDay(start).getTime()) / 86_400_000) + 1;
+}
+
+function rangesOverlap(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date): boolean {
+  return aStart <= bEnd && bStart <= aEnd;
+}
+
+function festivalSearchUrl(name: string): string {
+  return `https://search.naver.com/search.naver?query=${encodeURIComponent(name)}`;
+}
+
+// 혼잡/여유 요일 중 더 적은(=평소와 다른, 눈에 띄는) 쪽을 강조 대상으로 고른다
+function resolveHighlightGroup(crowdedDays: string[], relaxedDays: string[]): 'crowded' | 'relaxed' | null {
+  if (crowdedDays.length === 0 && relaxedDays.length === 0) return null;
+  if (relaxedDays.length === 0) return 'crowded';
+  if (crowdedDays.length === 0) return 'relaxed';
+  return crowdedDays.length <= relaxedDays.length ? 'crowded' : 'relaxed';
+}
+
+function mapForecastItem(
+  item: ForecastItemResponse,
+  todayISO: string,
+  festivalsById: Map<number, FestivalItemResponse>,
+): DayEntry {
+  return {
+    day: weekdayOf(item.date),
+    date: item.monthDay,
+    level: getCongestionLevel(item.congestion.score),
+    rate: item.congestion.score,
+    isToday: item.date === todayISO,
+    festivals: item.festivalIds
+      .map(id => festivalsById.get(id))
+      .filter((f): f is FestivalItemResponse => !!f),
+  };
+}
+
+// 30일 예측 범위 끝자락에서는 followingPeriod가 7일보다 짧게(partial) 올 수 있어 7칸으로 채워둠
+function padToSeven(
+  items: ForecastItemResponse[],
+  todayISO: string,
+  festivalsById: Map<number, FestivalItemResponse>,
 ): DayEntry[] {
-  const today = startOfDay(new Date());
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(rangeStart);
-    d.setDate(rangeStart.getDate() + weekOffset + i);
-    d.setHours(0, 0, 0, 0);
-    const fd = forecastData[weekOffset + i] ?? null;
-    return {
-      day: DAY_NAMES[d.getDay()],
-      date: fmtDate(d),
-      level: fd ? fd.level : null,
-      rate: fd ? fd.rate : null,
-      isToday: d.getTime() === today.getTime(),
-      // api 조회 후 축제 데이터 구분 값으로 유무 표기, 다른 객체로 축제 정보 받을 수 있음
-      festivals: FESTIVALS.filter(f => f.districtId === districtId && d >= f.start && d <= f.end),
-    };
-  });
+  const mapped = items.slice(0, 7).map(item => mapForecastItem(item, todayISO, festivalsById));
+  while (mapped.length < 7) {
+    mapped.push({ day: '', date: '', level: null, rate: null, isToday: false, festivals: [] });
+  }
+  return mapped;
 }
 
 export default function DetailPage() {
   const { spotId } = useParams<{ spotId: string }>();
   const navigate = useNavigate();
 
-  const spot = LIST_SPOTS.find(s => s.id === spotId);
+  const { data: spot, isPending, isError } = useQuery({
+    queryKey: ['place-detail', spotId],
+    queryFn: () => fetchPlaceDetail(spotId!),
+    enabled: !!spotId,
+  });
 
   const [descExpanded, setDescExpanded] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const today = useMemo(() => startOfDay(new Date()), []);
   const maxDate = useMemo(() => {
@@ -81,7 +129,6 @@ export default function DetailPage() {
     return d;
   }, [today]);
 
-  const [rangeStart, setRangeStart] = useState<Date>(today);
   const [confirmedStart, setConfirmedStart] = useState<Date>(today);
   const [confirmedEnd, setConfirmedEnd] = useState<Date>(() => {
     const d = new Date(today);
@@ -89,98 +136,71 @@ export default function DetailPage() {
     return d;
   });
 
-  const [forecastData, setForecastData] = useState<ForecastDay[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isInitLoaded, setIsInitLoaded] = useState(false);
+  const startParam = toISODate(confirmedStart);
+  const daysParam = daysBetween(confirmedStart, confirmedEnd);
+  const todayISO = useMemo(() => toISODate(new Date()), []);
 
-  useEffect(() => {
-    if (!spot) return;
-    const start = startOfDay(new Date());
-    const end = new Date(start);
-    end.setDate(start.getDate() + 13);
-    setIsLoading(true);
-    fetchCongestionForecast(spot.id, start, end)
-      .then(data => { setForecastData(data); setIsInitLoaded(true); })
-      .finally(() => setIsLoading(false));
-  }, [spot?.id]);
+  const { data: forecast, isFetching: isForecastFetching } = useQuery({
+    queryKey: ['place-forecast', spotId, startParam, daysParam],
+    queryFn: () => fetchPlaceForecast(spotId!, { start: startParam, days: daysParam }),
+    enabled: !!spotId,
+  });
 
-  const handleRangeConfirm = useCallback(async (start: Date, end: Date) => {
-    if (!spot) return;
-    setRangeStart(start);
+  const { data: festivalData } = useQuery({
+    queryKey: ['place-festivals', spotId],
+    queryFn: () => fetchPlaceFestivals(spotId!),
+    enabled: !!spotId,
+  });
+
+  const festivalsById = useMemo(() => {
+    const map = new Map<number, FestivalItemResponse>();
+    festivalData?.items.forEach(f => map.set(f.id, f));
+    return map;
+  }, [festivalData]);
+
+  // 향후 30일(혼잡도 예보 범위)과 겹치는 축제는 실제 조회 구간과 무관하게 목록으로 노출
+  const upcomingFestivals = useMemo(() => {
+    if (!festivalData) return [];
+    return festivalData.items.filter(f =>
+      rangesOverlap(parseISODate(f.startDate), parseISODate(f.endDate), today, maxDate),
+    );
+  }, [festivalData, today, maxDate]);
+
+  const handleRangeConfirm = useCallback((start: Date, end: Date) => {
     setConfirmedStart(start);
     setConfirmedEnd(end);
-    setIsLoading(true);
-    try {
-      const fetchEnd = new Date(start);
-      // TODO - 달력 선택 range + 7일로 변경 필요
-      // range 검색 결과가 예상 혼잡도 첫번째 ROW에 출력 되고, 이후 7일이 두번째 ROW에 출력
-      fetchEnd.setDate(start.getDate() + 13); 
-      const data = await fetchCongestionForecast(spot.id, start, fetchEnd);
-      setForecastData(data);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [spot]);
+  }, []);
 
   const thisWeek = useMemo(
-    () => spot ? buildWeekEntries(rangeStart, forecastData, 0, spot.districtId) : [],
-    [rangeStart, forecastData, spot],
+    () => forecast ? padToSeven(forecast.selectedPeriod.items, todayISO, festivalsById) : [],
+    [forecast, todayISO, festivalsById],
   );
 
   const nextWeek = useMemo(
-    () => spot ? buildWeekEntries(rangeStart, forecastData, 7, spot.districtId) : [],
-    [rangeStart, forecastData, spot],
+    () => forecast ? padToSeven(forecast.followingPeriod.items, todayISO, festivalsById) : [],
+    [forecast, todayISO, festivalsById],
   );
 
-  const periodFestivals = useMemo(() => {
-    if (!spot) return [];
-    const windowEnd = new Date(rangeStart);
-    windowEnd.setDate(rangeStart.getDate() + 13);
-    return FESTIVALS.filter(
-      f => f.districtId === spot.districtId && f.start <= windowEnd && f.end >= rangeStart
+  const { data: pattern } = useQuery({
+    queryKey: ['place-congestion-pattern', spotId],
+    queryFn: () => fetchPlaceCongestionPattern(spotId!),
+    enabled: !!spotId,
+  });
+
+  if (isPending) {
+    return (
+      <div className={styles.page}>
+        <Header />
+        <main className={styles.main}>
+          <div className={styles.loadingArea}>
+            <LoadingOverlay message="관광지 정보를 불러오는 중..." />
+          </div>
+        </main>
+      </div>
     );
-  }, [rangeStart, spot]);
+  }
 
-  const weekdayAvg = useMemo(() => {
-    const sums: Record<string, number> = {};
-    const counts: Record<string, number> = {};
-    // TODO
-    // 지금은 날짜 변경 시, 변경된 날짜부터 혼잡 패턴을 다시 계산하는 느낌?
-    // 요일별 혼잡 패턴은 오늘 날짜부터 30일 예측 기준 평균 혼잡도 출력
-    ORDERED_DAYS.forEach(d => { sums[d] = 0; counts[d] = 0; });
-    forecastData.forEach(fd => {
-      const name = DAY_NAMES[fd.date.getDay()];
-      sums[name] += fd.level;
-      counts[name]++;
-    });
-    const avg: Record<string, CongestionLevel> = {};
-    ORDERED_DAYS.forEach(d => {
-      avg[d] = (counts[d] ? Math.round(sums[d] / counts[d]) : 3) as CongestionLevel;
-    });
-    return avg;
-  }, [forecastData]);
-
-  const maxLv = Math.max(...ORDERED_DAYS.map(d => weekdayAvg[d])) as CongestionLevel;
-  const minLv = Math.min(...ORDERED_DAYS.map(d => weekdayAvg[d])) as CongestionLevel;
-  const busiestDays = ORDERED_DAYS.filter(d => weekdayAvg[d] === maxLv);
-  const calmestDays = ORDERED_DAYS.filter(d => weekdayAvg[d] === minLv);
-
-  const altSpots = useMemo(() => {
-    if (!spot) return [];
-    return LIST_SPOTS
-      .filter(s => s.id !== spot.id && s.tags.some(t => spot.tags.includes(t)) && s.level <= 2)
-      .sort((a, b) => a.congestionRate - b.congestionRate)
-      .slice(0, 4);
-  }, [spot]);
-
-  const relatedSpots = useMemo(() => {
-    if (!spot) return [];
-    return LIST_SPOTS
-      .filter(s => s.id !== spot.id && s.districtId === spot.districtId)
-      .slice(0, 4);
-  }, [spot]);
-
-  if (!spot) {
+  if (isError || !spot) {
     return (
       <div className={styles.page}>
         <Header />
@@ -195,6 +215,18 @@ export default function DetailPage() {
       </div>
     );
   }
+
+  const level = getCongestionLevel(spot.todayCongestion.score);
+  const showImg = !!spot.imageUrl && !imgError;
+
+  // TODO: 혼잡/매우혼잡 판정 시 저혼잡 대체 스팟을 보여주는 API 연동 전까지 항상 비어있음
+  const altSpots: RecPlace[] = [];
+  // TODO: 연관 관광지(함께 가기 좋아요) API 연동 전까지 항상 비어있음
+  const relatedSpots: RecPlace[] = [];
+
+  const highlightGroup = pattern
+    ? resolveHighlightGroup(pattern.summary.crowdedDays, pattern.summary.relaxedDays)
+    : null;
 
   return (
     <div className={styles.page}>
@@ -212,7 +244,18 @@ export default function DetailPage() {
 
         <div className={styles.detailGrid}>
           <div>
-            <div className={styles.spotImage} style={{ background: getSpotGradient(spot.id) }}>
+            <div
+              className={styles.spotImage}
+              style={showImg ? undefined : { background: getSpotGradient(String(spot.id)) }}
+            >
+              {showImg && (
+                <img
+                  src={spot.imageUrl}
+                  alt={spot.name}
+                  className={styles.spotImagePhoto}
+                  onError={() => setImgError(true)}
+                />
+              )}
               <div className={styles.spotImageOverlay} />
             </div>
 
@@ -225,8 +268,8 @@ export default function DetailPage() {
                 </p>
               </div>
               <img
-                src={getLevelImage(spot.level)}
-                alt={getLevelLabel(spot.level)}
+                src={getLevelImage(level)}
+                alt={getLevelLabel(level)}
                 className={styles.levelImg}
               />
             </div>
@@ -235,11 +278,7 @@ export default function DetailPage() {
               <button
                 className={styles.btnParking}
                 onClick={() =>
-                  window.open(
-                    `https://map.kakao.com/?q=${encodeURIComponent(spot.name + ' 주차장')}`,
-                    '_blank',
-                    'noopener,noreferrer',
-                  )
+                  window.open(spot.parkingSearchUrl, '_blank', 'noopener,noreferrer')
                 }
               >
                 <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
@@ -274,73 +313,90 @@ export default function DetailPage() {
               />
             </div>
 
-            <WeekGrid days={thisWeek} isLoading={isLoading || !isInitLoaded} />
+            <WeekGrid days={thisWeek} isLoading={isForecastFetching && !forecast} />
 
             <div className={styles.nextWeekHeader}>
               <div className={styles.divider} />
               <span className={styles.nextWeekLabel}>이후 7일</span>
               <div className={styles.divider} />
             </div>
-            <WeekGrid days={nextWeek} isLoading={isLoading || !isInitLoaded} />
+            <WeekGrid days={nextWeek} isLoading={isForecastFetching && !forecast} />
 
-            {periodFestivals.length > 0 && (
+            {upcomingFestivals.length > 0 && (
               <div className={styles.festivalNotice}>
-                {periodFestivals.map(f => (
-                  <div key={f.id} className={styles.festivalItem}>
-                    <span className={styles.festivalIcon}>{f.icon}</span>
-                    <div>
-                      <p className={styles.festivalName}>{f.name}</p>
-                      <p className={styles.festivalPeriod}>
-                        {f.place} · {fmtDate(f.start)} ~ {fmtDate(f.end)}
-                      </p>
+                {upcomingFestivals.map(f => {
+                  const go = () => window.open(festivalSearchUrl(f.name), '_blank', 'noopener,noreferrer');
+                  return (
+                    <div
+                      key={f.id}
+                      className={styles.festivalItem}
+                      onClick={go}
+                      role="link"
+                      tabIndex={0}
+                      onKeyDown={e => e.key === 'Enter' && go()}
+                    >
+                      <span className={styles.festivalIcon}>{FESTIVAL_ICON}</span>
+                      <div>
+                        <p className={styles.festivalName}>{f.name}</p>
+                        <p className={styles.festivalPeriod}>
+                          {f.placeName} · {f.displayPeriodText}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
-            {isInitLoaded && (
+            {!!pattern && pattern.items.length > 0 && (
               <div className={styles.patternSection}>
                 <div className={styles.patternHeader}>
                   <h3 className={styles.patternTitle}>요일별 혼잡 패턴</h3>
-                  <span className={styles.patternSub}>30일 예측 기준 평균</span>
+                  <span className={styles.patternSub}>예측 기간 기준 평균</span>
                 </div>
-                {forecastData.length > 0 && (
+                {(pattern.summary.crowdedDays.length > 0 || pattern.summary.relaxedDays.length > 0) && (
                   <div className={styles.patternInsight}>
-                    <span className={styles.chipBusy}>혼잡 {busiestDays.join('·')}요일</span>
-                    <span className={styles.chipCalm}>여유 {calmestDays.join('·')}요일</span>
+                    {pattern.summary.crowdedDays.length > 0 && (
+                      <span className={styles.chipBusy}>혼잡 {pattern.summary.crowdedDays.join('·')}요일</span>
+                    )}
+                    {pattern.summary.relaxedDays.length > 0 && (
+                      <span className={styles.chipCalm}>여유 {pattern.summary.relaxedDays.join('·')}요일</span>
+                    )}
                   </div>
                 )}
                 <div className={styles.vchartBars}>
-                  {ORDERED_DAYS.map(d => {
-                    const lv = weekdayAvg[d];
-                    const isHighest = lv === maxLv;
-                    const bg = isHighest ? 'var(--color-secondary)' : 'var(--color-primary)';
-                    const opacity = isHighest ? 1 : 0.25 + (lv - 1) * 0.15;
+                  {pattern.items.map(item => {
+                    const lv = getCongestionLevel(item.averageCongestion.score);
+                    const isCrowded = highlightGroup === 'crowded' && pattern.summary.crowdedDays.includes(item.dayLabel);
+                    const isRelaxed = highlightGroup === 'relaxed' && pattern.summary.relaxedDays.includes(item.dayLabel);
+                    const bg = isCrowded ? 'var(--color-secondary)' : isRelaxed ? 'var(--level-2)' : 'var(--color-primary)';
+                    const opacity = isCrowded || isRelaxed ? 1 : 0.25 + (lv - 1) * 0.15;
                     return (
-                      <div key={d} className={styles.vchartCol}>
+                      <div key={item.dayOfWeek} className={styles.vchartCol}>
                         <div
                           className={styles.vchartBar}
-                          style={{ height: `${BAR_HEIGHTS[lv]}%`, background: bg, opacity }}
+                          style={{ height: `${item.averageCongestion.score}%`, background: bg, opacity }}
                         />
                       </div>
                     );
                   })}
                 </div>
                 <div className={styles.vchartLabels}>
-                  {ORDERED_DAYS.map(d => {
-                    const lv = weekdayAvg[d];
-                    const isHighest = lv === maxLv;
-                    const isWeekend = WEEKENDS.has(d);
+                  {pattern.items.map(item => {
+                    const lv = getCongestionLevel(item.averageCongestion.score);
+                    const isCrowded = highlightGroup === 'crowded' && pattern.summary.crowdedDays.includes(item.dayLabel);
+                    const isRelaxed = highlightGroup === 'relaxed' && pattern.summary.relaxedDays.includes(item.dayLabel);
+                    const isWeekend = WEEKENDS.has(item.dayLabel);
                     return (
-                      <div key={d} className={styles.vchartLabel}>
-                        <span className={`${styles.vchartLabelDay} ${isWeekend ? styles.vchartLabelDayWeekend : ''}`}>{d}</span>
+                      <div key={item.dayOfWeek} className={styles.vchartLabel}>
+                        <span className={`${styles.vchartLabelDay} ${isWeekend ? styles.vchartLabelDayWeekend : ''}`}>{item.dayLabel}</span>
                         <span
                           className={styles.vchartLabelLv}
-                          style={{ color: isHighest ? 'var(--color-secondary)' : 'var(--color-sub)' }}
+                          style={{ color: isCrowded ? 'var(--color-secondary)' : isRelaxed ? 'var(--level-2)' : 'var(--color-sub)' }}
                         >
                           {LEVEL_LABELS_SHORT[lv]}
                         </span>
+                        <span className={styles.vchartLabelScore}>{item.averageCongestion.score}%</span>
                       </div>
                     );
                   })}
@@ -350,7 +406,7 @@ export default function DetailPage() {
           </div>
         </div>
 
-        {spot.level >= 4 && altSpots.length > 0 && (
+        {level >= 4 && altSpots.length > 0 && (
           <section className={styles.sectionAlt}>
             <div className={styles.alertBanner}>
               <span>⚠️</span>
@@ -360,12 +416,9 @@ export default function DetailPage() {
               <h2 className={styles.sectionTitleMain}>관광지 추천</h2>
             </div>
             <div className={styles.cardGrid}>
-              {altSpots.map(s => {
-                const sharedTag = s.tags.find(t => spot.tags.includes(t));
-                return (
-                  <RecCard key={s.id} spot={s} navigate={navigate} tag={sharedTag} />
-                );
-              })}
+              {altSpots.map(s => (
+                <RecCard key={s.id} spot={s} navigate={navigate} />
+              ))}
             </div>
           </section>
         )}
@@ -387,10 +440,9 @@ export default function DetailPage() {
   );
 }
 
-function RecCard({ spot, navigate, tag }: {
-  spot: (typeof LIST_SPOTS)[number];
+function RecCard({ spot, navigate }: {
+  spot: RecPlace;
   navigate: ReturnType<typeof useNavigate>;
-  tag?: string;
 }) {
   const go = () => navigate(`/detail/${spot.id}`);
   return (
@@ -401,8 +453,7 @@ function RecCard({ spot, navigate, tag }: {
       onKeyDown={e => e.key === 'Enter' && go()}
     >
       <div className={styles.recCardImgWrap}>
-        <div className={styles.recCardBg} style={{ background: getSpotGradient(spot.id) }} />
-        {tag && <span className={styles.recCardTag}>#{tag}</span>}
+        <div className={styles.recCardBg} style={{ background: getSpotGradient(String(spot.id)) }} />
         <img
           src={getLevelImage(spot.level)}
           alt={getLevelLabel(spot.level)}
@@ -416,10 +467,6 @@ function RecCard({ spot, navigate, tag }: {
     </article>
   );
 }
-
-const LEVEL_BAR_WIDTH: Record<CongestionLevel, string> = {
-  1: '20%', 2: '40%', 3: '60%', 4: '80%', 5: '100%',
-};
 
 function WeekGrid({ days, isLoading }: { days: DayEntry[]; isLoading: boolean }) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
@@ -457,7 +504,7 @@ function WeekGrid({ days, isLoading }: { days: DayEntry[]; isLoading: boolean })
             onClick={() => !isEmpty && setActiveIdx(v => v === i ? null : i)}
           >
             <span className={`${styles.dayLabel} ${isWeekend ? styles.dayLabelWeekend : ''}`}>
-              {d.day}
+              {d.isToday ? '오늘' : d.day}
             </span>
             <span className={styles.dayDate}>
               {d.isToday ? <b>{d.date}</b> : d.date}
@@ -486,7 +533,6 @@ function WeekGrid({ days, isLoading }: { days: DayEntry[]; isLoading: boolean })
                   />
                   <div>
                     <p className={styles.tooltipDate}>
-                      {d.isToday && <span className={styles.tooltipTodayBadge}>오늘</span>}
                       {d.day}요일 {d.date}
                     </p>
                     <p className={styles.tooltipLevelLabel} style={{ color }}>
@@ -507,7 +553,7 @@ function WeekGrid({ days, isLoading }: { days: DayEntry[]; isLoading: boolean })
                   <div className={styles.tooltipFestivals}>
                     {d.festivals.map(f => (
                       <div key={f.id} className={styles.tooltipFestivalItem}>
-                        <span>{f.icon}</span>
+                        <span>{FESTIVAL_ICON}</span>
                         <span className={styles.tooltipFestivalName}>{f.name}</span>
                       </div>
                     ))}
