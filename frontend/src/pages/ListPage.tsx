@@ -11,9 +11,10 @@ import styles from './ListPage.module.css';
 const PAGE_SIZE = 20;
 
 const SORT_OPTIONS = [
-  { value: 'NAME_ASC', label: '기본순' },
-  { value: 'CROWD_ASC', label: '혼잡도 낮은 순' },
-  { value: 'CROWD_DESC', label: '혼잡도 높은 순' },
+  { value: 'NAME_ASC', label: '관광지명 오름차순' },
+  { value: 'NAME_DESC', label: '관광지명 내림차순' },
+  { value: 'CROWD_ASC', label: '눈치게임 성공 순' },
+  { value: 'CROWD_DESC', label: '핫한 관광지 순' },
 ] as const;
 type SortValue = (typeof SORT_OPTIONS)[number]['value'];
 
