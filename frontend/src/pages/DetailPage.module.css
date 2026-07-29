@@ -436,11 +436,12 @@
   grid-template-columns: repeat(7, 1fr);
   align-items: flex-end;
   gap: 4px;
-  height: 72px;
+  height: 80px;
   margin-bottom: 4px;
 }
 
 .vchartCol {
+  position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -450,6 +451,17 @@
 .vchartBar {
   width: 55%;
   border-radius: 4px 4px 0 0;
+}
+
+.vchartBarScore {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--color-sub);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .vchartLabels {
@@ -482,13 +494,6 @@
   font-weight: 600;
   text-align: center;
   line-height: 1.3;
-}
-
-.vchartLabelScore {
-  font-size: 9px;
-  font-weight: 500;
-  color: var(--color-sub);
-  font-variant-numeric: tabular-nums;
 }
 
 /* ===========================
@@ -548,6 +553,33 @@
   background: var(--color-primary-tint);
 }
 
+.tabGroup {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 20px;
+  background: #f0f0f0;
+}
+
+.tabBtn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 16px;
+  background: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-sub);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tabBtnActive {
+  background: #fff;
+  color: var(--color-text);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
 /* 카드 그리드 */
 .cardGrid {
   display: grid;
@@ -587,6 +619,12 @@
 .recCardBg {
   width: 100%;
   height: 100%;
+}
+
+.recCardPhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .recCardTag {

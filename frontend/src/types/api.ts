@@ -165,6 +165,43 @@ export interface PlaceFestivalResponse {
   items: FestivalItemResponse[];
 }
 
+export interface NearbySuggestionItemResponse {
+  id: number;
+  name: string;
+  districtName: string;
+  imageUrl: string;
+  distanceKm: number;
+  todayCongestion: CongestionResponse;
+}
+
+export interface SimilarSuggestionItemResponse {
+  id: number;
+  name: string;
+  districtName: string;
+  imageUrl: string;
+  distanceKm: number;
+  category: string;
+  todayCongestion: CongestionResponse;
+}
+
+export interface PlaceSuggestionsResponse {
+  placeId: number;
+  nearby: NearbySuggestionItemResponse[];
+  similar: SimilarSuggestionItemResponse[];
+}
+
+export interface PlaceCompanionResponse {
+  id: number;
+  contentId: string;
+  name: string;
+  districtName: string;
+  contentTypeId: number;
+  address: string;
+  imageUrl: string;
+  lat: number;
+  lng: number;
+}
+
 export interface CongestionPatternItemResponse {
   dayOfWeek: string;
   dayLabel: string;

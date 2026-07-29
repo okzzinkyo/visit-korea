@@ -6,8 +6,15 @@ import DateRangePicker from '../components/DateRangePicker';
 import LoadingOverlay from '../components/LoadingOverlay';
 import { getCongestionLevel, getLevelColor, getLevelImage, getLevelLabel } from '../utils/congestion';
 import { getSpotGradient } from '../utils/spotGradient';
-import { fetchPlaceCongestionPattern, fetchPlaceDetail, fetchPlaceFestivals, fetchPlaceForecast } from '../api/places';
-import type { FestivalItemResponse, ForecastItemResponse } from '../types/api';
+import {
+  fetchPlaceCompanions,
+  fetchPlaceCongestionPattern,
+  fetchPlaceDetail,
+  fetchPlaceFestivals,
+  fetchPlaceForecast,
+  fetchPlaceSuggestions,
+} from '../api/places';
+import type { CongestionPatternItemResponse, FestivalItemResponse, ForecastItemResponse } from '../types/api';
 import type { CongestionLevel } from '../types';
 import styles from './DetailPage.module.css';
 
@@ -19,12 +26,14 @@ const LEVEL_LABELS_SHORT: Record<CongestionLevel, string> = {
   1: '눈치성공', 2: '여유', 3: '보통', 4: '혼잡', 5: '눈치실패',
 };
 
-// TODO: 대체 스팟/함께 가기 좋아요 관련 API 연동 전까지 자리만 유지
 interface RecPlace {
   id: number;
   name: string;
   districtName: string;
-  level: CongestionLevel;
+  imageUrl: string;
+  level?: CongestionLevel;
+  distanceKm?: number;
+  category?: string;
 }
 
 type DayEntry = {
@@ -69,6 +78,14 @@ function rangesOverlap(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date): bool
 
 function festivalSearchUrl(name: string): string {
   return `https://search.naver.com/search.naver?query=${encodeURIComponent(name)}`;
+}
+
+// 백엔드가 요일 패턴 summary(혼잡/여유 요일 목록)를 내려주지 않아 레벨 기준으로 직접 계산
+function computeSummary(items: CongestionPatternItemResponse[]) {
+  return {
+    crowdedDays: items.filter(i => getCongestionLevel(i.averageCongestion.score) >= 4).map(i => i.dayLabel),
+    relaxedDays: items.filter(i => getCongestionLevel(i.averageCongestion.score) <= 2).map(i => i.dayLabel),
+  };
 }
 
 // 혼잡/여유 요일 중 더 적은(=평소와 다른, 눈에 띄는) 쪽을 강조 대상으로 고른다
@@ -121,6 +138,7 @@ export default function DetailPage() {
 
   const [descExpanded, setDescExpanded] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [recTab, setRecTab] = useState<'nearby' | 'similar'>('nearby');
 
   const today = useMemo(() => startOfDay(new Date()), []);
   const maxDate = useMemo(() => {
@@ -185,7 +203,57 @@ export default function DetailPage() {
     queryKey: ['place-congestion-pattern', spotId],
     queryFn: () => fetchPlaceCongestionPattern(spotId!),
     enabled: !!spotId,
+    select: data => ({ ...data, summary: computeSummary(data.items) }),
   });
+
+  // 혼잡/매우혼잡(레벨 4 이상)일 때만 대체 스팟 추천을 조회
+  const isCrowded = !!spot && getCongestionLevel(spot.todayCongestion.score) >= 4;
+
+  const { data: suggestions } = useQuery({
+    queryKey: ['place-suggestions', spotId],
+    queryFn: () => fetchPlaceSuggestions(spotId!),
+    enabled: !!spotId && isCrowded,
+  });
+
+  const nearbySpots: RecPlace[] = useMemo(
+    () => suggestions?.nearby.map(s => ({
+      id: s.id,
+      name: s.name,
+      districtName: s.districtName,
+      imageUrl: s.imageUrl,
+      level: getCongestionLevel(s.todayCongestion.score),
+      distanceKm: s.distanceKm,
+    })) ?? [],
+    [suggestions],
+  );
+
+  const similarSpots: RecPlace[] = useMemo(
+    () => suggestions?.similar.map(s => ({
+      id: s.id,
+      name: s.name,
+      districtName: s.districtName,
+      imageUrl: s.imageUrl,
+      level: getCongestionLevel(s.todayCongestion.score),
+      category: s.category,
+    })) ?? [],
+    [suggestions],
+  );
+
+  const { data: companions, refetch: refetchCompanions, isFetching: isCompanionsFetching } = useQuery({
+    queryKey: ['place-companions', spotId],
+    queryFn: () => fetchPlaceCompanions(spotId!),
+    enabled: !!spotId,
+  });
+
+  const relatedSpots: RecPlace[] = useMemo(
+    () => companions?.map(c => ({
+      id: c.id,
+      name: c.name,
+      districtName: c.districtName,
+      imageUrl: c.imageUrl,
+    })) ?? [],
+    [companions],
+  );
 
   if (isPending) {
     return (
@@ -218,11 +286,6 @@ export default function DetailPage() {
 
   const level = getCongestionLevel(spot.todayCongestion.score);
   const showImg = !!spot.imageUrl && !imgError;
-
-  // TODO: 혼잡/매우혼잡 판정 시 저혼잡 대체 스팟을 보여주는 API 연동 전까지 항상 비어있음
-  const altSpots: RecPlace[] = [];
-  // TODO: 연관 관광지(함께 가기 좋아요) API 연동 전까지 항상 비어있음
-  const relatedSpots: RecPlace[] = [];
 
   const highlightGroup = pattern
     ? resolveHighlightGroup(pattern.summary.crowdedDays, pattern.summary.relaxedDays)
@@ -373,6 +436,12 @@ export default function DetailPage() {
                     const opacity = isCrowded || isRelaxed ? 1 : 0.25 + (lv - 1) * 0.15;
                     return (
                       <div key={item.dayOfWeek} className={styles.vchartCol}>
+                        <span
+                          className={styles.vchartBarScore}
+                          style={{ bottom: `calc(${item.averageCongestion.score}% + 4px)` }}
+                        >
+                          {item.averageCongestion.score}%
+                        </span>
                         <div
                           className={styles.vchartBar}
                           style={{ height: `${item.averageCongestion.score}%`, background: bg, opacity }}
@@ -396,7 +465,6 @@ export default function DetailPage() {
                         >
                           {LEVEL_LABELS_SHORT[lv]}
                         </span>
-                        <span className={styles.vchartLabelScore}>{item.averageCongestion.score}%</span>
                       </div>
                     );
                   })}
@@ -406,27 +474,58 @@ export default function DetailPage() {
           </div>
         </div>
 
-        {level >= 4 && altSpots.length > 0 && (
-          <section className={styles.sectionAlt}>
-            <div className={styles.alertBanner}>
-              <span>⚠️</span>
-              <span>{spot.name}이(가) 혼잡해요 &mdash; 비슷한 분위기의 여유로운 곳을 추천해드립니다</span>
-            </div>
-            <div className={styles.sectionTitleRow}>
-              <h2 className={styles.sectionTitleMain}>관광지 추천</h2>
-            </div>
-            <div className={styles.cardGrid}>
-              {altSpots.map(s => (
-                <RecCard key={s.id} spot={s} navigate={navigate} />
-              ))}
-            </div>
-          </section>
-        )}
+        {level >= 4 && (nearbySpots.length > 0 || similarSpots.length > 0) && (() => {
+          const recGroups = [
+            { key: 'nearby' as const, label: '내 주변', items: nearbySpots },
+            { key: 'similar' as const, label: '취향저격', items: similarSpots },
+          ].filter(g => g.items.length > 0);
+          const activeGroup = recGroups.find(g => g.key === recTab) ?? recGroups[0];
+
+          return (
+            <section className={styles.sectionAlt}>
+              <div className={styles.alertBanner}>
+                <span>⚠️</span>
+                <span>{spot.name}이(가) 혼잡해요 &mdash; 비슷한 분위기의 여유로운 곳을 추천해드립니다</span>
+              </div>
+              <div className={styles.sectionTitleRow}>
+                <h2 className={styles.sectionTitleMain}>관광지 추천</h2>
+                {recGroups.length > 1 && (
+                  <div className={styles.tabGroup}>
+                    {recGroups.map(g => (
+                      <button
+                        key={g.key}
+                        className={`${styles.tabBtn} ${activeGroup.key === g.key ? styles.tabBtnActive : ''}`}
+                        onClick={() => setRecTab(g.key)}
+                      >
+                        {g.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className={styles.cardGrid}>
+                {activeGroup.items.slice(0, 4).map(s => (
+                  <RecCard key={s.id} spot={s} navigate={navigate} />
+                ))}
+              </div>
+            </section>
+          );
+        })()}
 
         {relatedSpots.length > 0 && (
           <section className={styles.sectionRelated}>
             <div className={styles.sectionTitleRow}>
               <h2 className={styles.sectionTitleMain}>함께 가기 좋아요</h2>
+              {relatedSpots.length === 4 && (
+                <button
+                  className={styles.btnRefresh}
+                  onClick={() => refetchCompanions()}
+                  disabled={isCompanionsFetching}
+                  aria-label="다른 추천 보기"
+                >
+                  🔄
+                </button>
+              )}
             </div>
             <div className={styles.cardGrid}>
               {relatedSpots.map(s => (
@@ -444,6 +543,8 @@ function RecCard({ spot, navigate }: {
   spot: RecPlace;
   navigate: ReturnType<typeof useNavigate>;
 }) {
+  const [imgError, setImgError] = useState(false);
+  const showImg = !!spot.imageUrl && !imgError;
   const go = () => navigate(`/detail/${spot.id}`);
   return (
     <article
@@ -453,12 +554,32 @@ function RecCard({ spot, navigate }: {
       onKeyDown={e => e.key === 'Enter' && go()}
     >
       <div className={styles.recCardImgWrap}>
-        <div className={styles.recCardBg} style={{ background: getSpotGradient(String(spot.id)) }} />
-        <img
-          src={getLevelImage(spot.level)}
-          alt={getLevelLabel(spot.level)}
-          className={styles.recCardLevelImg}
-        />
+        <div
+          className={styles.recCardBg}
+          style={showImg ? undefined : { background: getSpotGradient(String(spot.id)) }}
+        >
+          {showImg && (
+            <img
+              src={spot.imageUrl}
+              alt={spot.name}
+              className={styles.recCardPhoto}
+              onError={() => setImgError(true)}
+            />
+          )}
+        </div>
+        {spot.distanceKm !== undefined && (
+          <span className={styles.recCardTag}>{spot.distanceKm.toFixed(1)}km</span>
+        )}
+        {spot.category && (
+          <span className={styles.recCardTag}>{spot.category}</span>
+        )}
+        {spot.level !== undefined && (
+          <img
+            src={getLevelImage(spot.level)}
+            alt={getLevelLabel(spot.level)}
+            className={styles.recCardLevelImg}
+          />
+        )}
       </div>
       <div className={styles.recCardInfo}>
         <p className={styles.recCardLoc}>부산시 {spot.districtName}</p>

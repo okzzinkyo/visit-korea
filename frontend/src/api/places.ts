@@ -1,10 +1,12 @@
 import { apiGet } from './client';
 import type {
+  PlaceCompanionResponse,
   PlaceCongestionPatternResponse,
   PlaceDetailResponse,
   PlaceFestivalResponse,
   PlaceForecastResponse,
   PlaceSearchResponse,
+  PlaceSuggestionsResponse,
 } from '../types/api';
 
 export interface FetchPlacesParams {
@@ -52,4 +54,12 @@ export function fetchPlaceFestivals(placeId: string | number): Promise<PlaceFest
 
 export function fetchPlaceCongestionPattern(placeId: string | number): Promise<PlaceCongestionPatternResponse> {
   return apiGet<PlaceCongestionPatternResponse>(`/api/places/${placeId}/congestion-pattern`);
+}
+
+export function fetchPlaceSuggestions(placeId: string | number): Promise<PlaceSuggestionsResponse> {
+  return apiGet<PlaceSuggestionsResponse>(`/api/places/${placeId}/suggestions`);
+}
+
+export function fetchPlaceCompanions(placeId: string | number): Promise<PlaceCompanionResponse[]> {
+  return apiGet<PlaceCompanionResponse[]>(`/api/places/${placeId}/companions`);
 }
