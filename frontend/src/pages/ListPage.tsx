@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import Header from '../components/Header';
@@ -39,6 +39,7 @@ export default function ListPage() {
   const [page, setPage] = useState(0);
 
   const chipScrollRef = useRef<HTMLDivElement>(null);
+  const activeChipRef = useRef<HTMLButtonElement>(null);
   const dragState = useRef({ isDown: false, startX: 0, scrollLeft: 0, moved: false });
 
   const onChipMouseDown = useCallback((e: React.MouseEvent) => {
@@ -76,6 +77,11 @@ export default function ListPage() {
     placeholderData: keepPreviousData,
   });
 
+  // 가로 스크롤이 고정 위치라 활성 chip이 화면 밖에 있을 수 있어 선택 시 자동으로 보이게 스크롤
+  useEffect(() => {
+    activeChipRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [activeCode, data]);
+
   const selectDistrict = (code: string) => {
     const params = new URLSearchParams();
     if (code) params.set('district', code);
@@ -94,7 +100,6 @@ export default function ListPage() {
     }
     const matchedCode = data?.districtFacets.find(f => f.districtName === q)?.districtCode;
     if (matchedCode) {
-      setSearchInput('');
       navigate(`/list?district=${matchedCode}`, { replace: true });
     } else {
       navigate(`/list?q=${encodeURIComponent(q)}`, { replace: true });
@@ -198,6 +203,7 @@ export default function ListPage() {
             {(data?.districtFacets ?? []).map(facet => (
               <button
                 key={facet.districtCode ?? 'all'}
+                ref={facet.selected ? activeChipRef : undefined}
                 className={`${styles.chip} ${facet.selected ? styles.chipActive : ''}`}
                 onClick={() => { if (!dragState.current.moved) selectDistrict(facet.districtCode ?? ''); }}
               >
