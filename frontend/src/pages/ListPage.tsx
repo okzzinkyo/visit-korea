@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import SpotCard from '../components/SpotCard';
 import LoadingOverlay from '../components/LoadingOverlay';
 import { fetchPlaces } from '../api/places';
-import { getCongestionLevel, getLevelColor, getLevelLabel, getLevelImage } from '../utils/congestion';
+import CongestionBanner from '../components/CongestionBanner';
 import styles from './ListPage.module.css';
 
 const PAGE_SIZE = 20;
@@ -145,21 +145,18 @@ export default function ListPage() {
     ? `"${data.selectedDistrict.districtName}"`
     : '전체';
 
-  const [popupDismissed, setPopupDismissed] = useState(false);
-
   // ponytail: 배너 UI 확인용 임시 mock — 백엔드 visible 수정 후 제거
   const showBanner = true;
-  const districtRate = data?.districtSuggestion.selectedDistrict?.congestionScore ?? 78;
-  const top3Calm = data?.districtSuggestion.recommendedDistricts?.length
+  const bannerDistrict = data?.districtSuggestion.selectedDistrict ?? {
+    districtCode: '26350', districtName: '해운대구', congestionScore: 78, levelCode: 'L4',
+  };
+  const bannerTop3 = data?.districtSuggestion.recommendedDistricts?.length
     ? data.districtSuggestion.recommendedDistricts
     : [
         { districtCode: '26410', districtName: '금정구', congestionScore: 22, levelCode: 'L1' },
         { districtCode: '26440', districtName: '북구',   congestionScore: 31, levelCode: 'L2' },
         { districtCode: '26470', districtName: '강서구', congestionScore: 18, levelCode: 'L1' },
       ];
-  const bannerName = data?.districtSuggestion.selectedDistrict?.districtName ?? '해운대구';
-  const bannerColor = getLevelColor(getCongestionLevel(districtRate));
-  const bannerLabel = getLevelLabel(getCongestionLevel(districtRate));
 
   const items = data?.items ?? [];
   const totalCount = data?.page.totalElements ?? 0;
@@ -248,59 +245,13 @@ export default function ListPage() {
             ))}
           </div>
 
-          {/* 혼잡도 배너 — 모바일 */}
           {showBanner && (
-            <div className={styles.bannerAlt} style={{ '--banner-accent': bannerColor } as React.CSSProperties}>
-              <div className={styles.bannerAltLeft}>
-                <img src={getLevelImage(getCongestionLevel(districtRate))} alt={bannerLabel} className={styles.bannerLevelImg} />
-                <div className={styles.bannerInfo}>
-                  <span className={styles.bannerHeadline}>{bannerName}, 지금 붐빕니다!</span>
-                  <span className={styles.bannerScore} style={{ color: bannerColor }}>혼잡도 {districtRate}%</span>
-                </div>
-              </div>
-              <div className={styles.bannerDivider} />
-              <div className={styles.bannerRight}>
-                <p className={styles.bannerRightLabel}>
-                  눈치게임 성공 구역
-                  <span className={styles.bannerTop3}>TOP 3</span>
-                </p>
-                <div className={styles.bannerChips}>
-                  {[...top3Calm].sort((a, b) => a.congestionScore - b.congestionScore).map(d => {
-                    const color = getLevelColor(getCongestionLevel(d.congestionScore));
-                    return (
-                      <button key={d.districtCode} className={styles.bannerChip} onClick={() => selectDistrict(d.districtCode)}>
-                        <span className={styles.bannerChipName}>{d.districtName}</span>
-                        <span className={styles.bannerChipScore} style={{ color }}>{d.congestionScore}%</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-
-          {/* 혼잡도 배너 — PC */}
-          {showBanner && (
-            <button
-              className={styles.bannerC}
-              style={{ '--banner-accent': bannerColor } as React.CSSProperties}
-              onClick={() => setPopupDismissed(false)}
-              aria-label={`${bannerName} 혼잡 — 눈치게임 성공 TOP 3 보기`}
-            >
-              <img src={getLevelImage(getCongestionLevel(districtRate))} alt={bannerLabel} className={styles.bannerCImg} />
-              <p className={styles.bannerCHeadline}>
-                <span className={styles.bannerCDistrict}>{bannerName}</span>
-                , 지금 붐빕니다!
-                <span className={styles.bannerCSub}>여유로운 구역을 추천드릴게요!</span>
-              </p>
-              <span className={styles.bannerCCta}>
-                눈치게임 성공 TOP 3
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6"/>
-                </svg>
-              </span>
-            </button>
+            <CongestionBanner
+              districtName={bannerDistrict.districtName}
+              congestionScore={bannerDistrict.congestionScore}
+              top3={bannerTop3}
+              onSelectDistrict={selectDistrict}
+            />
           )}
 
           <div className={styles.resultBar}>
@@ -395,47 +346,6 @@ export default function ListPage() {
         </div>
       </div>
 
-      {/* 혼잡도 플로팅 팝업 — PC */}
-      {showBanner && !popupDismissed && (
-        <div className={styles.bannerPopup} style={{ '--banner-accent': bannerColor } as React.CSSProperties}>
-          <button className={styles.bannerPopupClose} onClick={() => setPopupDismissed(true)} aria-label="닫기">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-          <div className={styles.bannerPopupTop}>
-            <img src={getLevelImage(getCongestionLevel(districtRate))} alt={bannerLabel} className={styles.bannerPopupImg} />
-            <div className={styles.bannerInfo}>
-              <span className={styles.bannerHeadline}>
-                <span className={styles.bannerHeadlineLine1}>{bannerName},</span>
-                지금 붐빕니다!
-              </span>
-              <span className={styles.bannerScore} style={{ color: bannerColor }}>혼잡도 {districtRate}%</span>
-            </div>
-          </div>
-          <div className={styles.bannerPopupDivider} />
-          <p className={styles.bannerRightLabel}>
-            눈치게임 성공 구역
-            <span className={styles.bannerTop3}>TOP 3</span>
-          </p>
-          <div className={styles.bannerTextList}>
-            {[...top3Calm].sort((a, b) => a.congestionScore - b.congestionScore).map((d, i) => {
-              const color = getLevelColor(getCongestionLevel(d.congestionScore));
-              return (
-                <button key={d.districtCode} className={styles.bannerTextItem} onClick={() => selectDistrict(d.districtCode)}>
-                  <span className={styles.bannerTextRank}>{i + 1}</span>
-                  <span className={styles.bannerTextName}>{d.districtName}</span>
-                  <span className={styles.bannerTextScore} style={{ color }}>{d.congestionScore}%</span>
-                  <svg className={styles.bannerTextChevron} width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6"/>
-                  </svg>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
