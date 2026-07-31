@@ -107,6 +107,52 @@
   background: var(--color-primary-dark);
 }
 
+/* ── 활성 검색어 태그 ── */
+.activeSearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #eef5ff;
+  border: 1.5px solid rgba(8, 139, 255, 0.2);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  color: var(--color-primary);
+  font-size: 13px;
+}
+
+.activeKeyword {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.activeCount {
+  color: var(--color-sub);
+  font-weight: 500;
+  flex: 1;
+}
+
+.clearSearch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1.5px solid rgba(8, 139, 255, 0.3);
+  background: #fff;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.clearSearch:hover {
+  background: #eef5ff;
+}
+
 /* ── 구/군 필터 칩 ── */
 .chipScroll {
   display: flex;
@@ -253,35 +299,91 @@
   font-weight: 700;
 }
 
-.sortGroup {
-  display: flex;
-  gap: 4px;
+.sortSelect {
+  position: relative;
+  width: fit-content;
 }
 
-.sortPill {
-  height: 34px;
-  padding: 0 13px;
+.sortSelectBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 172px;
+  height: 36px;
+  padding: 0 14px;
   border: 1.5px solid rgba(0, 0, 0, 0.12);
-  border-radius: 20px;
+  border-radius: 10px;
   background: #fff;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--color-sub);
+  color: var(--color-text);
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition: border-color 0.15s, color 0.15s;
+  box-sizing: border-box;
 }
 
-.sortPill:hover {
+.sortSelectBtn:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
 
-.sortPillActive {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
+.chevron {
+  transition: transform 0.2s;
+  flex-shrink: 0;
+  color: var(--color-sub);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+  flex-shrink: 0;
+  color: var(--color-primary);
+  transition: transform 0.2s;
+}
+
+.sortDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 100%;
+  background: #fff;
+  border: 1.5px solid rgba(0, 0, 0, 0.09);
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.13);
+  overflow: hidden;
+  z-index: 200;
+  box-sizing: border-box;
+}
+
+.sortItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.sortItem + .sortItem {
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.sortItem:hover {
+  background: #f4f7fb;
+}
+
+.sortItemActive {
+  color: var(--color-primary);
+  font-weight: 700;
 }
 
 /* ── 검색/필터 결과 영역 (로딩 오버레이 기준) ── */
@@ -400,6 +502,10 @@
 
   .bannerChips {
     width: 100%;
+  }
+
+  .activeSearch {
+    flex-wrap: wrap;
   }
 }
 

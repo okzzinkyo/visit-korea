@@ -11,10 +11,10 @@ import styles from './ListPage.module.css';
 const PAGE_SIZE = 20;
 
 const SORT_OPTIONS = [
-  { value: 'NAME_ASC',   label: '관광지명 오름차순', short: '이름 ↑' },
-  { value: 'NAME_DESC',  label: '관광지명 내림차순', short: '이름 ↓' },
-  { value: 'CROWD_ASC',  label: '눈치게임 성공 순',  short: '여유순'  },
-  { value: 'CROWD_DESC', label: '핫한 관광지 순',    short: '핫한순'  },
+  { value: 'NAME_ASC',   label: '관광지명 오름차순' },
+  { value: 'NAME_DESC',  label: '관광지명 내림차순' },
+  { value: 'CROWD_DESC', label: '핫한 관광지 순'    },
+  { value: 'CROWD_ASC',  label: '눈치게임 성공 순'  },
 ] as const;
 type SortValue = (typeof SORT_OPTIONS)[number]['value'];
 
@@ -41,6 +41,8 @@ export default function ListPage() {
   const chipScrollRef = useRef<HTMLDivElement>(null);
   const activeChipRef = useRef<HTMLButtonElement>(null);
   const dragState = useRef({ isDown: false, startX: 0, scrollLeft: 0, moved: false });
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+  const [sortOpen, setSortOpen] = useState(false);
 
   const onChipMouseDown = useCallback((e: React.MouseEvent) => {
     const el = chipScrollRef.current;
@@ -77,10 +79,18 @@ export default function ListPage() {
     placeholderData: keepPreviousData,
   });
 
-  // 가로 스크롤이 고정 위치라 활성 chip이 화면 밖에 있을 수 있어 선택 시 자동으로 보이게 스크롤
   useEffect(() => {
     activeChipRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }, [activeCode, data]);
+
+  useEffect(() => {
+    if (!sortOpen) return;
+    const close = (e: MouseEvent) => {
+      if (!sortDropdownRef.current?.contains(e.target as Node)) setSortOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [sortOpen]);
 
   const selectDistrict = (code: string) => {
     const params = new URLSearchParams();
@@ -187,6 +197,22 @@ export default function ListPage() {
           <button className={styles.searchBtn} onClick={handleSearch}>검색</button>
         </div>
 
+        {submittedKeyword && !isPending && (
+          <div className={styles.activeSearch}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <span className={styles.activeKeyword}>"{submittedKeyword}"</span>
+            <span className={styles.activeCount}>{totalCount}개 결과</span>
+            <button className={styles.clearSearch} onClick={handleClear}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              초기화
+            </button>
+          </div>
+        )}
+
         <div className={styles.resultsArea}>
           {isPending ? (
           <LoadingOverlay message="관광지를 불러오는 중..." radius={16} />
@@ -252,17 +278,43 @@ export default function ListPage() {
             <span className={styles.resultCount}>
               <b>{resultLabel}</b> 관광지&nbsp;<b>{totalCount}개</b>
             </span>
-            <div className={styles.sortGroup}>
-              {SORT_OPTIONS.map(o => (
-                <button
-                  key={o.value}
-                  className={`${styles.sortPill} ${sort === o.value ? styles.sortPillActive : ''}`}
-                  onClick={() => handleSortChange(o.value)}
-                  title={o.label}
+            <div className={styles.sortSelect} ref={sortDropdownRef}>
+              <button
+                className={styles.sortSelectBtn}
+                onClick={() => setSortOpen(v => !v)}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18M6 12h12M10 18h4"/>
+                </svg>
+                <span style={{ flex: 1, textAlign: 'left' }}>{SORT_OPTIONS.find(o => o.value === sort)?.label}</span>
+                <svg
+                  width="12" height="12" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  className={sortOpen ? styles.chevronOpen : styles.chevron}
                 >
-                  {o.short}
-                </button>
-              ))}
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              {sortOpen && (
+                <div className={styles.sortDropdown}>
+                  {SORT_OPTIONS.map(o => (
+                    <button
+                      key={o.value}
+                      className={`${styles.sortItem} ${sort === o.value ? styles.sortItemActive : ''}`}
+                      onClick={() => { handleSortChange(o.value); setSortOpen(false); }}
+                    >
+                      <svg
+                        width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                        style={{ opacity: sort === o.value ? 1 : 0, flexShrink: 0 }}
+                      >
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
