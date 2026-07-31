@@ -150,7 +150,7 @@
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 
-.chip:hover {
+.chip:hover:not(.chipActive) {
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
