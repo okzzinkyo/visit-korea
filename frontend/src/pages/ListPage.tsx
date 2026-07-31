@@ -209,21 +209,6 @@ export default function ListPage() {
           <button className={styles.searchBtn} onClick={handleSearch}>검색</button>
         </div>
 
-        {submittedKeyword && !isPending && (
-          <div className={styles.activeSearch}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <span className={styles.activeKeyword}>"{submittedKeyword}"</span>
-            <span className={styles.activeCount}>{totalCount}개 결과</span>
-            <button className={styles.clearSearch} onClick={handleClear}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-              초기화
-            </button>
-          </div>
-        )}
 
         <div className={styles.resultsArea}>
           {isPending ? (

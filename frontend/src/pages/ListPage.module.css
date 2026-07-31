@@ -107,52 +107,6 @@
   background: var(--color-primary-dark);
 }
 
-/* ── 활성 검색어 태그 ── */
-.activeSearch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #eef5ff;
-  border: 1.5px solid rgba(8, 139, 255, 0.2);
-  border-radius: 12px;
-  padding: 10px 14px;
-  margin-bottom: 16px;
-  color: var(--color-primary);
-  font-size: 13px;
-}
-
-.activeKeyword {
-  font-weight: 700;
-  color: var(--color-primary);
-}
-
-.activeCount {
-  color: var(--color-sub);
-  font-weight: 500;
-  flex: 1;
-}
-
-.clearSearch {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  border: 1.5px solid rgba(8, 139, 255, 0.3);
-  background: #fff;
-  border-radius: 20px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s;
-  flex-shrink: 0;
-}
-
-.clearSearch:hover {
-  background: #eef5ff;
-}
-
 /* ── 구/군 필터 칩 ── */
 .chipScroll {
   display: flex;
@@ -504,9 +458,6 @@
     width: 100%;
   }
 
-  .activeSearch {
-    flex-wrap: wrap;
-  }
 }
 
 @media (max-width: 480px) {
