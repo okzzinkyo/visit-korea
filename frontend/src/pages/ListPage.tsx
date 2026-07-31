@@ -139,10 +139,10 @@ export default function ListPage() {
     setPage(0);
   };
 
-  const resultLabel = data?.selectedDistrict
-    ? data.selectedDistrict.districtName
-    : submittedKeyword
+  const resultLabel = submittedKeyword
     ? `"${submittedKeyword}"`
+    : data?.selectedDistrict
+    ? `"${data.selectedDistrict.districtName}"`
     : '전체';
 
   const showBanner = data?.districtSuggestion.visible ?? false;
