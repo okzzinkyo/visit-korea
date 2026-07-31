@@ -26,7 +26,12 @@ export default function MainPage() {
   const handleSearch = () => {
     const q = searchValue.trim();
     if (!q) return;
-    navigate(`/list?q=${encodeURIComponent(q)}`);
+    const matchedDistrict = data?.districts.find(d => d.districtName === q);
+    if (matchedDistrict) {
+      navigate(`/list?district=${matchedDistrict.districtCode}`);
+    } else {
+      navigate(`/list?q=${encodeURIComponent(q)}`);
+    }
   };
 
   if (isError) {

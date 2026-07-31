@@ -43,6 +43,7 @@ export default function ListPage() {
   const dragState = useRef({ isDown: false, startX: 0, scrollLeft: 0, moved: false });
   const sortDropdownRef = useRef<HTMLDivElement>(null);
   const [sortOpen, setSortOpen] = useState(false);
+  const districtCodeCache = useRef<Map<string, string>>(new Map());
 
   const onChipMouseDown = useCallback((e: React.MouseEvent) => {
     const el = chipScrollRef.current;
@@ -84,6 +85,16 @@ export default function ListPage() {
   }, [activeCode, data]);
 
   useEffect(() => {
+    setSearchInput(submittedKeyword);
+  }, [submittedKeyword]);
+
+  useEffect(() => {
+    data?.districtFacets.forEach(f => {
+      if (f.districtCode) districtCodeCache.current.set(f.districtName, f.districtCode);
+    });
+  }, [data?.districtFacets]);
+
+  useEffect(() => {
     if (!sortOpen) return;
     const close = (e: MouseEvent) => {
       if (!sortDropdownRef.current?.contains(e.target as Node)) setSortOpen(false);
@@ -108,7 +119,8 @@ export default function ListPage() {
       navigate('/list', { replace: true });
       return;
     }
-    const matchedCode = data?.districtFacets.find(f => f.districtName === q)?.districtCode;
+    const matchedCode = districtCodeCache.current.get(q)
+      ?? data?.districtFacets.find(f => f.districtName === q)?.districtCode;
     if (matchedCode) {
       navigate(`/list?district=${matchedCode}`, { replace: true });
     } else {
