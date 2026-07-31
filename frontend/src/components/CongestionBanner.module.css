@@ -1,8 +1,6 @@
 .banner {
   background: #fff6f4;
-  border: 1.5px solid rgba(0, 0, 0, 0.07);
   border-left: 4px solid var(--banner-accent, #088bff);
-  border-radius: 16px;
   padding: 18px 24px;
   margin-bottom: 24px;
   display: flex;
@@ -38,9 +36,7 @@
   padding: 12px 14px 12px 16px;
   margin: 0 0 20px;
   background: #fff6f4;
-  border: 1.5px solid rgba(0, 0, 0, 0.07);
   border-left: 4px solid var(--banner-accent, #088bff);
-  border-radius: 12px;
   width: 100%;
   cursor: pointer;
   font-family: inherit;
@@ -148,7 +144,6 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  flex-shrink: 0;
   min-width: 0;
 }
 
@@ -160,6 +155,7 @@
   font-weight: 700;
   color: var(--color-text);
   margin: 0 0 8px;
+  padding-left: 4px;
 }
 
 .bannerTop3 {
@@ -347,7 +343,7 @@
   .bannerPopup { display: none; }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 720px) {
   .banner,
   .bannerAlt {
     flex-direction: column;

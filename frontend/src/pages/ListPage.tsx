@@ -145,18 +145,8 @@ export default function ListPage() {
     ? `"${data.selectedDistrict.districtName}"`
     : '전체';
 
-  // ponytail: 배너 UI 확인용 임시 mock — 백엔드 visible 수정 후 제거
-  const showBanner = true;
-  const bannerDistrict = data?.districtSuggestion.selectedDistrict ?? {
-    districtCode: '26350', districtName: '해운대구', congestionScore: 78, levelCode: 'L4',
-  };
-  const bannerTop3 = data?.districtSuggestion.recommendedDistricts?.length
-    ? data.districtSuggestion.recommendedDistricts
-    : [
-        { districtCode: '26410', districtName: '금정구', congestionScore: 22, levelCode: 'L1' },
-        { districtCode: '26440', districtName: '북구',   congestionScore: 31, levelCode: 'L2' },
-        { districtCode: '26470', districtName: '강서구', congestionScore: 18, levelCode: 'L1' },
-      ];
+  const bannerDistrict = data?.districtSuggestion.selectedDistrict;
+  const bannerTop3 = data?.districtSuggestion.recommendedDistricts ?? [];
 
   const items = data?.items ?? [];
   const totalCount = data?.page.totalElements ?? 0;
@@ -245,7 +235,7 @@ export default function ListPage() {
             ))}
           </div>
 
-          {showBanner && (
+          {data?.districtSuggestion.visible && bannerDistrict && (
             <CongestionBanner
               districtName={bannerDistrict.districtName}
               congestionScore={bannerDistrict.congestionScore}
