@@ -11,10 +11,10 @@ import styles from './ListPage.module.css';
 const PAGE_SIZE = 20;
 
 const SORT_OPTIONS = [
-  { value: 'NAME_ASC', label: '관광지명 오름차순' },
-  { value: 'NAME_DESC', label: '관광지명 내림차순' },
-  { value: 'CROWD_ASC', label: '눈치게임 성공 순' },
-  { value: 'CROWD_DESC', label: '핫한 관광지 순' },
+  { value: 'NAME_ASC',   label: '관광지명 오름차순', short: '이름 ↑' },
+  { value: 'NAME_DESC',  label: '관광지명 내림차순', short: '이름 ↓' },
+  { value: 'CROWD_ASC',  label: '눈치게임 성공 순',  short: '여유순'  },
+  { value: 'CROWD_DESC', label: '핫한 관광지 순',    short: '핫한순'  },
 ] as const;
 type SortValue = (typeof SORT_OPTIONS)[number]['value'];
 
@@ -252,15 +252,18 @@ export default function ListPage() {
             <span className={styles.resultCount}>
               <b>{resultLabel}</b> 관광지&nbsp;<b>{totalCount}개</b>
             </span>
-            <select
-              className={styles.sortSelect}
-              value={sort}
-              onChange={e => handleSortChange(e.target.value as SortValue)}
-            >
+            <div className={styles.sortGroup}>
               {SORT_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <button
+                  key={o.value}
+                  className={`${styles.sortPill} ${sort === o.value ? styles.sortPillActive : ''}`}
+                  onClick={() => handleSortChange(o.value)}
+                  title={o.label}
+                >
+                  {o.short}
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
           {items.length > 0 ? (

@@ -68,7 +68,10 @@ export default function MainPage() {
       <div className={styles.content}>
         <section>
           <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>눈치게임 접전지</h2>
+            <div>
+              <p className={styles.sectionEyebrow}>혼잡 배틀 TOP 3</p>
+              <h2 className={styles.sectionTitle}>눈치게임 접전지</h2>
+            </div>
             <div className={styles.tabGroup}>
               <button
                 className={`${styles.tabBtn} ${battleTab === 'weekly' ? styles.tabBtnActive : ''}`}
@@ -92,6 +95,7 @@ export default function MainPage() {
         </section>
 
         <section>
+          <p className={styles.sectionEyebrow}>여유로운 부산 명소</p>
           <h2 className={styles.sectionTitle}>이 달의 히든 플레이스</h2>
           <div className={styles.hiddenGrid}>
             {isPending

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getCongestionLevel, getLevelColor } from '../utils/congestion';
 import { getSpotGradient } from '../utils/spotGradient';
 import type { HiddenPlaceItemResponse } from '../types/api';
 import styles from './HiddenPlaceCard.module.css';
@@ -12,6 +13,7 @@ export default function HiddenPlaceCard({ place }: Props) {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
   const showImg = !!place.imageUrl && !imgError;
+  const levelColor = getLevelColor(getCongestionLevel(place.averageCongestion.score));
   const goDetail = () => navigate(`/detail/${place.id}`);
 
   return (
@@ -20,15 +22,22 @@ export default function HiddenPlaceCard({ place }: Props) {
         {showImg && (
           <img src={place.imageUrl} alt={place.name} className={styles.imgPhoto} onError={() => setImgError(true)} />
         )}
+        <span className={styles.hiddenTag}>숨은명소</span>
       </div>
       <div className={styles.body}>
         <div className={styles.content}>
           <span className={styles.name}>{place.name}</span>
+          <span className={styles.district}>부산시 {place.districtName}</span>
           <p className={styles.desc}>{place.description}</p>
         </div>
-        <button className={styles.cta} onClick={e => { e.stopPropagation(); goDetail(); }}>
-          자세히 보기
-        </button>
+        <div className={styles.cardFooter}>
+          <span className={styles.congestion} style={{ color: levelColor }}>
+            ● 평균 {place.averageCongestion.score}%
+          </span>
+          <button className={styles.cta} onClick={e => { e.stopPropagation(); goDetail(); }}>
+            자세히 보기
+          </button>
+        </div>
       </div>
     </article>
   );

@@ -37,18 +37,17 @@ export default function SpotCard({ place }: { place: PlaceCardResponse }) {
           <span className={styles.districtDot} style={{ background: color }} />
           {place.districtName}
         </p>
+        <span className={styles.avgLabel}>지난 7일 평균</span>
         <div className={styles.barRow}>
           <div className={styles.bar}>
             <div className={styles.barFill} style={{ width: `${rate}%`, background: color }} />
           </div>
           <span className={styles.rate} style={{ color }}>{rate}%</span>
         </div>
-        <button
-          className={styles.btn}
-          onClick={e => { e.stopPropagation(); goDetail(); }}
-        >
-          자세히 보기 →
-        </button>
+        <div className={styles.footer}>
+          <span className={styles.views}>{place.last7DaysDetailViewCount.toLocaleString()}명이 눈치 보는 중!</span>
+          <span className={styles.cta}>자세히 →</span>
+        </div>
       </div>
     </article>
   );
