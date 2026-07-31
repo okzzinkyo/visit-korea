@@ -123,6 +123,15 @@
   - 해결 방향 미결정: ① 페이지별 다른 라벨(Header에 prop 주입) ② 라벨만 제거하고 날짜는 유지 ③ Header에서 날짜/라벨 영역 전체 제거
   - 임시 조치: `SpotCard` body에 "지난 7일 평균" 레이블 명시로 최소한의 맥락 제공
 
+### UI/UX 미해결 이슈 (2026-08-01 추가)
+- [ ] **메인 HotPlaceCard — SpotCard(목록) 와 통일감 부재**: 눈치게임 접전지 카드(`HotPlaceCard`)와 목록 페이지 스팟 카드(`SpotCard`)의 디자인 언어가 달라 이질감 발생. SpotCard 기준으로 맞추거나 공통 컴포넌트 추출 검토
+- [ ] **메인 HiddenPlaceCard 모바일 레이아웃 재검토**: 600px 이하 세로 스택 반응형 추가됐으나 실기기/DevTools에서 최종 QA 미실시. 단어 끊김·여백·이미지 높이 확인 필요
+- [ ] **상세 페이지 UI 개선**: 세부 항목 별도 논의 예정
+- [ ] **상세 주차장 검색 버그 — 이름 기반 URL 문제**: 백엔드가 내려주는 `parkingSearchUrl`이 관광지 이름 기반 검색이라, 다른 지역에 동일 이름 관광지가 있을 경우 엉뚱한 주차장이 노출됨. 해결 방향 미확정:
+  - 옵션 A: `spot.address`를 URL 쿼리에 함께 포함 (프론트 단 즉시 가능)
+  - 옵션 B: `spot.lat`/`lng`로 카카오맵 좌표 기반 주차장 검색 링크 직접 생성 (`PlaceDetailResponse`에 이미 `lat`/`lng` 있음)
+  - 옵션 C: 백엔드에서 좌표 기반 URL 제공하도록 API 스펙 변경 요청
+
 ### UI/UX 완료 항목 (2026-08-01)
 - [x] `CongestionBanner` 컴포넌트 분리 (`ListPage.tsx`에서 추출) — border/radius 제거, `districtSuggestion` API 연동
 - [x] `SpotCard` 카드 재설계 — 이미지 오버레이 배지 제거 → 하단 스크림 + 레벨 라벨, hover border accent(`--card-accent`), CSS-only 화살표(`ctaLine + ::after`)

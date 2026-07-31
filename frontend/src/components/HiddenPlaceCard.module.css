@@ -75,24 +75,21 @@
 .desc {
   font-size: 13px;
   color: var(--color-sub);
-  line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  line-height: 1.65;
   margin: 0;
+  word-break: keep-all;
+}
+
+.descScore {
+  font-weight: 800;
+  font-size: 14px;
 }
 
 .cardFooter {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-top: 14px;
-}
-
-.congestion {
-  font-size: 11px;
-  font-weight: 600;
 }
 
 .cta {
@@ -111,4 +108,29 @@
 
 .cta:hover {
   background: #e4e4e4;
+}
+
+/* 태블릿: 2열 카드가 좁아지는 구간 — 이미지 폭 축소 */
+@media (max-width: 840px) {
+  .img {
+    width: 150px;
+    min-width: 150px;
+  }
+}
+
+/* 모바일: 이미지 위, 텍스트 아래로 세로 스택 */
+@media (max-width: 600px) {
+  .card {
+    flex-direction: column;
+  }
+
+  .img {
+    width: 100%;
+    min-width: unset;
+    height: 180px;
+  }
+
+  .body {
+    padding: 16px 18px 18px;
+  }
 }

@@ -101,7 +101,23 @@ export default function MainPage() {
 
         <section>
           <p className={styles.sectionEyebrow}>여유로운 부산 명소</p>
-          <h2 className={styles.sectionTitle}>이 달의 히든 플레이스</h2>
+          <div className={styles.hiddenTitleRow}>
+            <h2 className={styles.sectionTitle}>이 달의 히든 플레이스</h2>
+            <div className={styles.infoWrap} tabIndex={0}>
+              <span className={styles.infoBtn}>ⓘ</span>
+              <div className={styles.infoBubble}>
+                <p className={styles.infoBubbleTitle}>이 달의 히든 플레이스</p>
+                <p className={styles.infoBubbleBody}>
+                  오늘부터 향후 30일간 평균 예측 혼잡도가 가장 낮아,
+                  여유롭게 즐기기 좋은 숨은 명소 2곳을 추천합니다.
+                </p>
+                <ul className={styles.infoBubbleList}>
+                  <li><b>선정 기준</b> 향후 30일간 평균 예측 혼잡률 최저 관광지 (동률 시 랜덤)</li>
+                  <li><b>예측 기간</b> 오늘 ~ 30일 후 예측 데이터 기준</li>
+                </ul>
+              </div>
+            </div>
+          </div>
           <div className={styles.hiddenGrid}>
             {isPending
               ? Array.from({ length: 2 }, (_, i) => <div key={i} className={styles.cardSkeleton} />)
