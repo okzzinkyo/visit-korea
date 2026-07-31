@@ -75,6 +75,12 @@ export default function KakaoMap({ districts }: Props) {
   const navigateRef   = useRef(navigate);
   useEffect(() => { navigateRef.current = navigate; }, [navigate]);
 
+  const mousePosRef     = useRef({ x: 0, y: 0 });
+  const hideTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const contentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isOnPopupRef    = useRef(false);
+  const recIdRef        = useRef<number | null>(null);
+
   // districts 갱신 시 처리 — 폴리곤이 아직 없으면(GeoJSON·혼잡도 데이터가 둘 다
   // 준비된 시점에) 실제 색으로 처음 그리고, 이미 있으면 색만 다시 칠한다.
   // 기본색(0%)으로 먼저 그렸다가 나중에 다시 칠하는 깜빡임을 막기 위함.
@@ -125,12 +131,9 @@ export default function KakaoMap({ districts }: Props) {
       };
     }
 
-    // 마우스 위치 추적 → popup 위치 갱신
+    // 커서 위치만 추적 — 툴팁은 더 이상 커서를 따라가지 않음
     const onMouseMove = (e: MouseEvent) => {
-      const popup = popupRef.current;
-      if (!popup || !popup.classList.contains(styles.popupVisible)) return;
-      popup.style.left = `${e.clientX + 20}px`;
-      popup.style.top  = `${e.clientY - popup.offsetHeight / 2}px`;
+      mousePosRef.current = { x: e.clientX, y: e.clientY };
     };
     window.addEventListener('mousemove', onMouseMove);
 
@@ -179,6 +182,8 @@ export default function KakaoMap({ districts }: Props) {
 
           // 폴리곤과 라벨 모두에서 동일하게 반응하도록 핸들러를 한 번만 정의해 공유
           const handleMouseOver = () => {
+            if (hideTimerRef.current) { clearTimeout(hideTimerRef.current); hideTimerRef.current = null; }
+
             const district = districtsRef.current.get(code);
             const r     = district?.congestion.score ?? 0;
             const lv    = getCongestionLevel(r);
@@ -186,27 +191,43 @@ export default function KakaoMap({ districts }: Props) {
 
             polygon.setOptions({ fillColor: color, fillOpacity: 0.85, strokeWeight: 2.5 });
 
-            if (popupNameRef.current)  popupNameRef.current.textContent = name;
-            if (popupBadgeRef.current) {
-              popupBadgeRef.current.textContent      = `${r}%`;
-              popupBadgeRef.current.style.color      = color;
-              popupBadgeRef.current.style.background = `${color}22`;
-            }
-            if (popupImgRef.current) {
-              popupImgRef.current.src = getLevelImage(lv);
-              popupImgRef.current.alt = getLevelLabel(lv);
-            }
-            const rec = district?.recommendedPlace;
-            if (popupRecommendNameRef.current) popupRecommendNameRef.current.textContent = rec?.name ?? '';
-            if (popupRecommendRef.current) {
-              popupRecommendRef.current.style.backgroundImage = rec?.imageUrl ? `url(${rec.imageUrl})` : 'none';
-            }
-            popupRef.current?.classList.add(styles.popupVisible);
+            // 툴팁이 이미 보이면 150ms 디바운스 (인접 폴리곤 지나칠 때 내용/위치 안 바꿈)
+            // 처음 진입이면 즉시 (0ms)
+            const alreadyVisible = popupRef.current?.classList.contains(styles.popupVisible) ?? false;
+            if (contentTimerRef.current) { clearTimeout(contentTimerRef.current); contentTimerRef.current = null; }
+            contentTimerRef.current = setTimeout(() => {
+              const popup = popupRef.current;
+              if (!popup) return;
+              // 진입 순간 커서 위치에 고정 — 이후 움직이지 않음
+              popup.style.left = `${mousePosRef.current.x + 20}px`;
+              popup.style.top  = `${mousePosRef.current.y - popup.offsetHeight / 2}px`;
+              if (popupNameRef.current)  popupNameRef.current.textContent = name;
+              if (popupBadgeRef.current) {
+                popupBadgeRef.current.textContent      = `${r}%`;
+                popupBadgeRef.current.style.color      = color;
+                popupBadgeRef.current.style.background = `${color}22`;
+              }
+              if (popupImgRef.current) {
+                popupImgRef.current.src = getLevelImage(lv);
+                popupImgRef.current.alt = getLevelLabel(lv);
+              }
+              const rec = district?.recommendedPlace;
+              recIdRef.current = rec?.id ?? null;
+              if (popupRecommendNameRef.current) popupRecommendNameRef.current.textContent = rec?.name ?? '';
+              if (popupRecommendRef.current) {
+                popupRecommendRef.current.style.backgroundImage = rec?.imageUrl ? `url(${rec.imageUrl})` : 'none';
+              }
+              popup.classList.add(styles.popupVisible);
+            }, alreadyVisible ? 150 : 0);
           };
 
           const handleMouseOut = () => {
+            if (contentTimerRef.current) { clearTimeout(contentTimerRef.current); contentTimerRef.current = null; }
             polygon.setOptions({ fillColor: baseColorRef.current.get(code) ?? fillColor, fillOpacity: 0.55, strokeWeight: 1.5 });
-            popupRef.current?.classList.remove(styles.popupVisible);
+            // 툴팁 위치는 그대로 — 300ms 안에 툴팁으로 이동하면 취소
+            hideTimerRef.current = setTimeout(() => {
+              if (!isOnPopupRef.current) popupRef.current?.classList.remove(styles.popupVisible);
+            }, 300);
           };
 
           const handleClick = () => {
@@ -256,6 +277,8 @@ export default function KakaoMap({ districts }: Props) {
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('resize', onResize);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      if (contentTimerRef.current) clearTimeout(contentTimerRef.current);
     };
   }, []);
 
@@ -270,8 +293,19 @@ export default function KakaoMap({ districts }: Props) {
         ↺ 부산 전체보기
       </button>
 
-      {/* hover 팝업 — pointer-events:none으로 polygon 이벤트 방해 안 함 */}
-      <div className={styles.popup} ref={popupRef}>
+      {/* hover tooltip — visible 상태일 때만 pointer-events: auto */}
+      <div
+        className={styles.popup}
+        ref={popupRef}
+        onMouseEnter={() => {
+          isOnPopupRef.current = true;
+          if (hideTimerRef.current) { clearTimeout(hideTimerRef.current); hideTimerRef.current = null; }
+        }}
+        onMouseLeave={() => {
+          isOnPopupRef.current = false;
+          popupRef.current?.classList.remove(styles.popupVisible);
+        }}
+      >
         <div className={styles.popupName}  ref={popupNameRef} />
         <div className={styles.popupLabel}>평균 혼잡도</div>
         <div className={styles.popupCrowdRow}>
@@ -280,7 +314,11 @@ export default function KakaoMap({ districts }: Props) {
         </div>
         <div className={styles.popupDivider} />
         <div className={styles.popupRecommendLabel}>추천 여행지</div>
-        <div className={styles.popupRecommend} ref={popupRecommendRef}>
+        <div
+          className={styles.popupRecommend}
+          ref={popupRecommendRef}
+          onClick={() => { if (recIdRef.current) navigateRef.current(`/detail/${recIdRef.current}`); }}
+        >
           <p className={styles.popupRecommendName} ref={popupRecommendNameRef} />
         </div>
       </div>

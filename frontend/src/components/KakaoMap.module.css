@@ -57,6 +57,7 @@
 
 .popupVisible {
   opacity: 1;
+  pointer-events: auto;
 }
 
 .popupName {
@@ -120,6 +121,12 @@
   overflow: hidden;
   display: flex;
   align-items: flex-end;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.popupRecommend:hover {
+  opacity: 0.85;
 }
 
 .popupRecommendName {
