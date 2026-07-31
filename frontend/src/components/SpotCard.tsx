@@ -17,19 +17,15 @@ export default function SpotCard({ place }: { place: PlaceCardResponse }) {
   const goDetail = () => navigate(`/detail/${place.id}`);
 
   return (
-    <article className={styles.card} onClick={goDetail}>
+    <article className={styles.card} onClick={goDetail} style={{ '--card-accent': color } as React.CSSProperties}>
       <div className={styles.img} style={showImg ? undefined : { background: getSpotGradient(String(place.id)) }}>
         {showImg && (
           <img src={place.imageUrl} alt={place.name} className={styles.imgPhoto} onError={() => setImgError(true)} />
         )}
         <div className={styles.imgOverlay} />
-        <img src={getLevelImage(level)} alt={label} className={styles.levelImg} />
-        <span
-          className={styles.badge}
-          style={{ background: `${color}28`, color, border: `1px solid ${color}50` }}
-        >
-          {label}
-        </span>
+        <div className={styles.imgScrim} />
+        <span className={styles.imgLabel}>{label}</span>
+        <img src={getLevelImage(level)} alt="" className={styles.levelImg} />
       </div>
       <div className={styles.body}>
         <p className={styles.name}>{place.name}</p>
@@ -46,7 +42,9 @@ export default function SpotCard({ place }: { place: PlaceCardResponse }) {
         </div>
         <div className={styles.footer}>
           <span className={styles.views}>{place.last7DaysDetailViewCount.toLocaleString()}명이 눈치 보는 중!</span>
-          <span className={styles.cta}>자세히 →</span>
+          <span className={styles.cta} aria-label="자세히 보기">
+            <span className={styles.ctaLine} />
+          </span>
         </div>
       </div>
     </article>

@@ -3,9 +3,9 @@
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1.5px solid rgba(0, 0, 0, 0.06);
   cursor: pointer;
-  transition: transform 0.25s, box-shadow 0.25s;
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
   display: flex;
   flex-direction: column;
 }
@@ -13,6 +13,7 @@
 .card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.13);
+  border-color: color-mix(in srgb, var(--card-accent) 40%, transparent);
 }
 
 /* 이미지 영역 — 4:3 */
@@ -38,27 +39,37 @@
   background: rgba(0, 0, 0, 0.2);
 }
 
+.imgScrim {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.58) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.imgLabel {
+  position: absolute;
+  bottom: 11px;
+  left: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
 .levelImg {
   position: absolute;
-  bottom: 10px;
+  bottom: 6px;
   right: 10px;
   width: 38px;
   height: 38px;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-}
-
-.badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  white-space: nowrap;
 }
 
 /* 본문 */
@@ -148,7 +159,35 @@
 }
 
 .cta {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  color: var(--card-accent, var(--color-primary));
+  flex-shrink: 0;
+}
+
+.ctaLine {
+  position: relative;
+  display: block;
+  width: 18px;
+  height: 1.5px;
+  background: currentColor;
+  border-radius: 1px;
+  transition: width 0.22s ease;
+}
+
+.ctaLine::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  width: 6px;
+  height: 1.5px;
+  background: currentColor;
+  border-radius: 1px;
+  transform-origin: left center;
+  transform: translateY(-50%) rotate(-135deg);
+}
+
+.card:hover .ctaLine {
+  width: 30px;
 }
