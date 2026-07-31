@@ -308,7 +308,7 @@
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 
-.pageBtn:hover:not(:disabled) {
+.pageBtn:hover:not(:disabled):not(.pageBtnActive) {
   border-color: var(--color-primary);
   color: var(--color-primary);
 }

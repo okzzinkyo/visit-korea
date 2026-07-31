@@ -18,14 +18,7 @@ const SORT_OPTIONS = [
 ] as const;
 type SortValue = (typeof SORT_OPTIONS)[number]['value'];
 
-function buildPageWindow(current: number, totalPages: number, windowSize = 5) {
-  if (totalPages <= 0) return [];
-  const half = Math.floor(windowSize / 2);
-  let start = Math.max(0, current - half);
-  const end = Math.min(totalPages - 1, start + windowSize - 1);
-  start = Math.max(0, end - windowSize + 1);
-  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-}
+const WINDOW_SIZE = 5;
 
 export default function ListPage() {
   const [searchParams] = useSearchParams();
@@ -68,7 +61,7 @@ export default function ListPage() {
     if (chipScrollRef.current) chipScrollRef.current.style.cursor = 'grab';
   }, []);
 
-  const { data, isPending, isError } = useQuery({
+  const { data, isPending, isFetching, isError } = useQuery({
     queryKey: ['places', submittedKeyword, activeCode, sort, page],
     queryFn: () => fetchPlaces({
       keyword: submittedKeyword || undefined,
@@ -82,7 +75,7 @@ export default function ListPage() {
 
   useEffect(() => {
     activeChipRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  }, [activeCode, data]);
+  }, [activeCode]);
 
   useEffect(() => {
     setSearchInput(submittedKeyword);
@@ -151,7 +144,12 @@ export default function ListPage() {
   const items = data?.items ?? [];
   const totalCount = data?.page.totalElements ?? 0;
   const totalPages = data?.page.totalPages ?? 0;
-  const pageWindow = buildPageWindow(page, totalPages);
+
+  const windowStart = Math.floor(page / WINDOW_SIZE) * WINDOW_SIZE;
+  const pageWindow = Array.from(
+    { length: Math.min(WINDOW_SIZE, Math.max(0, totalPages - windowStart)) },
+    (_, i) => windowStart + i
+  );
 
   if (isError) {
     return (
@@ -290,7 +288,7 @@ export default function ListPage() {
 
           {items.length > 0 ? (
             <>
-              <div className={styles.grid}>
+              <div className={styles.grid} style={{ opacity: isFetching ? 0.5 : 1, transition: 'opacity 0.18s' }}>
                 {items.map(place => (
                   <SpotCard key={place.id} place={place} />
                 ))}
@@ -300,8 +298,8 @@ export default function ListPage() {
                 <div className={styles.pagination}>
                   <button
                     className={styles.pageBtn}
-                    disabled={page === 0}
-                    onClick={() => setPage(p => Math.max(0, p - 1))}
+                    disabled={windowStart === 0}
+                    onClick={() => setPage(Math.max(0, windowStart - WINDOW_SIZE))}
                   >
                     이전
                   </button>
@@ -316,8 +314,8 @@ export default function ListPage() {
                   ))}
                   <button
                     className={styles.pageBtn}
-                    disabled={!(data?.page.hasNext ?? false)}
-                    onClick={() => setPage(p => p + 1)}
+                    disabled={windowStart + WINDOW_SIZE >= totalPages}
+                    onClick={() => setPage(windowStart + WINDOW_SIZE)}
                   >
                     다음
                   </button>
