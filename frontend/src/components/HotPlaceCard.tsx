@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCongestionLevel, getLevelColor } from '../utils/congestion';
 import { getSpotGradient } from '../utils/spotGradient';
+import IconPin from './IconPin';
 import type { BattlePlaceResponse } from '../types/api';
 import styles from './HotPlaceCard.module.css';
 
@@ -42,7 +43,10 @@ export default function HotPlaceCard({ place }: Props) {
       <div className={styles.body}>
         <div>
           <span className={styles.name}>{place.name}</span>
-          <span className={styles.location}>부산시 {place.districtName}</span>
+          <span className={styles.location}>
+            <IconPin className={styles.locationIcon} />
+            부산시 {place.districtName}
+          </span>
         </div>
         <div className={styles.bottom}>
           <span className={styles.visitorCount}>{place.detailViewCount.toLocaleString()}명 눈치 중</span>

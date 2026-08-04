@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCongestionLevel, getLevelColor } from '../utils/congestion';
 import { getSpotGradient } from '../utils/spotGradient';
+import IconPin from './IconPin';
 import type { HiddenPlaceItemResponse } from '../types/api';
 import styles from './HiddenPlaceCard.module.css';
 
@@ -27,7 +28,10 @@ export default function HiddenPlaceCard({ place }: Props) {
       <div className={styles.body}>
         <div className={styles.content}>
           <span className={styles.name}>{place.name}</span>
-          <span className={styles.district}>부산시 {place.districtName}</span>
+          <span className={styles.district}>
+            <IconPin className={styles.districtIcon} />
+            부산시 {place.districtName}
+          </span>
           <p className={styles.desc}>
             향후 30일 평균 예측 혼잡도{' '}
             <strong className={styles.descScore} style={{ color: levelColor }}>

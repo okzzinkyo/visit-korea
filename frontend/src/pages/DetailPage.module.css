@@ -113,6 +113,12 @@
   gap: 5px;
 }
 
+.addressIcon {
+  display: block;
+  flex-shrink: 0;
+  margin-top: -2px;
+}
+
 .spotParkingRow {
   margin-bottom: 14px;
 }
@@ -136,22 +142,6 @@
 .btnParking:hover {
   background: var(--color-secondary-dark);
   box-shadow: 0 4px 14px rgba(245, 82, 32, 0.25);
-}
-
-.tagRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 14px;
-}
-
-.tag {
-  padding: 4px 10px;
-  background: var(--color-primary-tint);
-  color: var(--color-primary);
-  border-radius: var(--radius-pill);
-  font-size: 11px;
-  font-weight: 600;
 }
 
 .spotDescWrap {
@@ -218,17 +208,6 @@
   font-weight: 800;
   color: var(--color-text);
   margin: 0;
-}
-
-.dateRangeLabel {
-  font-size: 12px;
-  color: var(--color-sub);
-  font-weight: 500;
-  padding: 6px 10px;
-  background: var(--bg-page);
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-btn);
-  white-space: nowrap;
 }
 
 /* 7일 그리드 */
@@ -314,46 +293,6 @@
   font-weight: 700;
   color: var(--color-sub);
   white-space: nowrap;
-}
-
-/* 축제 배너 */
-.festivalNotice {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 14px;
-}
-
-.festivalItem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  background: var(--color-secondary-tint);
-  border-left: 3px solid var(--color-secondary);
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.festivalItem:hover {
-  filter: brightness(0.97);
-}
-
-.festivalItemIcon {
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.festivalItemName {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-.festivalItemPeriod {
-  font-size: 11px;
-  color: var(--color-sub);
-  margin-top: 1px;
 }
 
 /* 요일별 혼잡 패턴 */
@@ -527,6 +466,11 @@
   gap: 8px;
 }
 
+.alertIcon {
+  display: block;
+  flex-shrink: 0;
+}
+
 .sectionTitleRow {
   display: flex;
   align-items: center;
@@ -545,12 +489,12 @@
   background: none;
   border: 1.5px solid var(--color-border);
   border-radius: 8px;
-  padding: 5px 9px;
-  font-size: 16px;
+  padding: 6px 9px;
   color: var(--color-sub);
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   transition: all 0.15s;
 }
 
@@ -668,6 +612,17 @@
   color: var(--color-sub);
   font-weight: 500;
   margin: 0 0 2px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.recCardLocIcon {
+  display: block;
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  margin-top: -2px;
 }
 
 .recCardName {
@@ -675,38 +630,6 @@
   font-weight: 700;
   color: var(--color-text);
   margin: 0;
-}
-
-/* 날짜 범위 관련 */
-.selectedRangeLabel {
-  font-size: 12px;
-  color: var(--color-sub);
-  margin-bottom: 14px;
-  font-weight: 500;
-}
-
-.weekSectionLabel {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: 8px;
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.weekDateRange {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--color-sub);
-}
-
-.weekDateRangeSub {
-  font-size: 11px;
-  color: var(--color-sub);
-  font-weight: 500;
-  text-align: center;
-  margin-bottom: 8px;
 }
 
 /* 빈 셀 (범위 밖) */
@@ -845,46 +768,15 @@
   font-size: 11px;
 }
 
+.tooltipFestivalIcon {
+  display: block;
+  flex-shrink: 0;
+  color: var(--color-secondary-dark);
+}
+
 .tooltipFestivalName {
   color: var(--color-secondary-dark);
   font-weight: 600;
-}
-
-/* 축제 도트 */
-.festivalDot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--color-secondary);
-  flex-shrink: 0;
-}
-
-/* 축제 있는 셀 — hover 툴팁 */
-.dayCellFestival {
-  position: relative;
-}
-
-.dayCellFestival[data-festival]::after {
-  content: attr(data-festival);
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(10, 35, 66, 0.88);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 500;
-  padding: 5px 9px;
-  border-radius: 6px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s;
-  z-index: 20;
-}
-
-.dayCellFestival[data-festival]:hover::after {
-  opacity: 1;
 }
 
 /* 축제 안내 배너 */
@@ -912,8 +804,9 @@
 }
 
 .festivalIcon {
-  font-size: 16px;
+  display: block;
   flex-shrink: 0;
+  color: var(--color-secondary);
 }
 
 .festivalName {

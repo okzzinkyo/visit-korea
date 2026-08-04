@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import Header from '../components/Header';
 import DateRangePicker from '../components/DateRangePicker';
 import LoadingOverlay from '../components/LoadingOverlay';
+import IconPin from '../components/IconPin';
 import { getCongestionLevel, getLevelColor, getLevelImage, getLevelLabel } from '../utils/congestion';
 import { getSpotGradient } from '../utils/spotGradient';
 import {
@@ -20,11 +21,42 @@ import styles from './DetailPage.module.css';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 const WEEKENDS = new Set(['토', '일']);
-const FESTIVAL_ICON = '🎉';
 
 const LEVEL_LABELS_SHORT: Record<CongestionLevel, string> = {
   1: '눈치성공', 2: '여유', 3: '보통', 4: '혼잡', 5: '눈치실패',
 };
+
+function IconFestival({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 21V4" />
+      <path d="M4 4h13l-2.5 4L17 12H4" />
+    </svg>
+  );
+}
+
+function IconRefresh({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="13" height="13" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12a9 9 0 0 1-15.5 6.36M3 12a9 9 0 0 1 15.5-6.36" />
+      <polyline points="21 3 21 9 15 9" />
+      <polyline points="3 21 3 15 9 15" />
+    </svg>
+  );
+}
+
+function IconAlert({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="15" height="15" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3.5 2.5 20h19L12 3.5Z" />
+      <line x1="12" y1="9.5" x2="12" y2="14" />
+      <circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
 
 interface RecPlace {
   id: number;
@@ -326,7 +358,7 @@ export default function DetailPage() {
               <div>
                 <h1 className={styles.spotName}>{spot.name}</h1>
                 <p className={styles.spotAddress}>
-                  <span>📍</span>
+                  <IconPin className={styles.addressIcon} />
                   {spot.address}
                 </p>
               </div>
@@ -398,7 +430,7 @@ export default function DetailPage() {
                       tabIndex={0}
                       onKeyDown={e => e.key === 'Enter' && go()}
                     >
-                      <span className={styles.festivalIcon}>{FESTIVAL_ICON}</span>
+                      <IconFestival className={styles.festivalIcon} />
                       <div>
                         <p className={styles.festivalName}>{f.name}</p>
                         <p className={styles.festivalPeriod}>
@@ -484,7 +516,7 @@ export default function DetailPage() {
           return (
             <section className={styles.sectionAlt}>
               <div className={styles.alertBanner}>
-                <span>⚠️</span>
+                <IconAlert className={styles.alertIcon} />
                 <span>{spot.name}이(가) 혼잡해요 &mdash; 비슷한 분위기의 여유로운 곳을 추천해드립니다</span>
               </div>
               <div className={styles.sectionTitleRow}>
@@ -522,7 +554,7 @@ export default function DetailPage() {
                 disabled={isCompanionsFetching}
                 aria-label="다른 추천 보기"
               >
-                🔄
+                <IconRefresh />
               </button>
             )}
           </div>
@@ -586,7 +618,10 @@ function RecCard({ spot, navigate }: {
         )}
       </div>
       <div className={styles.recCardInfo}>
-        <p className={styles.recCardLoc}>부산시 {spot.districtName}</p>
+        <p className={styles.recCardLoc}>
+          <IconPin className={styles.recCardLocIcon} />
+          부산시 {spot.districtName}
+        </p>
         <p className={styles.recCardName}>{spot.name}</p>
       </div>
     </article>
@@ -678,7 +713,7 @@ function WeekGrid({ days, isLoading }: { days: DayEntry[]; isLoading: boolean })
                   <div className={styles.tooltipFestivals}>
                     {d.festivals.map(f => (
                       <div key={f.id} className={styles.tooltipFestivalItem}>
-                        <span>{FESTIVAL_ICON}</span>
+                        <IconFestival className={styles.tooltipFestivalIcon} />
                         <span className={styles.tooltipFestivalName}>{f.name}</span>
                       </div>
                     ))}
