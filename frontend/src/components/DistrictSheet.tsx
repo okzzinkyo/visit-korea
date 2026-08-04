@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { getCongestionLevel, getLevelColor, getLevelLabel } from '../utils/congestion';
+import { josaIGa, josaEunNeun } from '../utils/josa';
 import { DISTRICT_CONGESTION, DISTRICT_NAMES } from '../data/mockData';
 import styles from './DistrictSheet.module.css';
 
@@ -53,8 +54,8 @@ export default function DistrictSheet({ district, onClose, onNavigate }: Props) 
         </div>
         <p className={styles.desc}>
           {isCongested
-            ? `지금 ${name}이(가) 혼잡해요. 비슷한 테마의 여유로운 구를 먼저 살펴볼까요?`
-            : `지금 ${name}은(는) 비교적 여유로워요. 관광지를 바로 탐색해보세요.`}
+            ? `지금 ${name}${josaIGa(name)} 혼잡해요. 비슷한 테마의 여유로운 구를 먼저 살펴볼까요?`
+            : `지금 ${name}${josaEunNeun(name)} 비교적 여유로워요. 관광지를 바로 탐색해보세요.`}
         </p>
         {isCongested && (
           <div className={styles.calmSection}>

@@ -7,6 +7,7 @@ import LoadingOverlay from '../components/LoadingOverlay';
 import IconPin from '../components/IconPin';
 import { getCongestionLevel, getLevelColor, getLevelImage, getLevelLabel } from '../utils/congestion';
 import { getSpotGradient } from '../utils/spotGradient';
+import { josaIGa } from '../utils/josa';
 import {
   fetchPlaceCompanions,
   fetchPlaceCongestionPattern,
@@ -43,17 +44,6 @@ function IconRefresh({ className }: { className?: string }) {
       <path d="M21 12a9 9 0 0 1-15.5 6.36M3 12a9 9 0 0 1 15.5-6.36" />
       <polyline points="21 3 21 9 15 9" />
       <polyline points="3 21 3 15 9 15" />
-    </svg>
-  );
-}
-
-function IconAlert({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="15" height="15" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3.5 2.5 20h19L12 3.5Z" />
-      <line x1="12" y1="9.5" x2="12" y2="14" />
-      <circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -339,34 +329,39 @@ export default function DetailPage() {
 
         <div className={styles.detailGrid}>
           <div>
-            <div
-              className={styles.spotImage}
-              style={showImg ? undefined : { background: getSpotGradient(String(spot.id)) }}
-            >
-              {showImg && (
+            <div className={styles.spotImageWrap}>
+              <div
+                className={styles.spotImage}
+                style={showImg ? undefined : { background: getSpotGradient(String(spot.id)) }}
+              >
+                {showImg && (
+                  <img
+                    src={spot.imageUrl}
+                    alt={spot.name}
+                    className={styles.spotImagePhoto}
+                    onError={() => setImgError(true)}
+                  />
+                )}
+                <div className={styles.spotImageOverlay} />
+              </div>
+              <div className={styles.levelStamp}>
                 <img
-                  src={spot.imageUrl}
-                  alt={spot.name}
-                  className={styles.spotImagePhoto}
-                  onError={() => setImgError(true)}
+                  src={getLevelImage(level)}
+                  alt={getLevelLabel(level)}
+                  className={styles.levelStampImg}
                 />
-              )}
-              <div className={styles.spotImageOverlay} />
+                <span className={styles.levelStampScore} style={{ color: getLevelColor(level) }}>
+                  {spot.todayCongestion.score}%
+                </span>
+              </div>
             </div>
 
             <div className={styles.spotTitleRow}>
-              <div>
-                <h1 className={styles.spotName}>{spot.name}</h1>
-                <p className={styles.spotAddress}>
-                  <IconPin className={styles.addressIcon} />
-                  {spot.address}
-                </p>
-              </div>
-              <img
-                src={getLevelImage(level)}
-                alt={getLevelLabel(level)}
-                className={styles.levelImg}
-              />
+              <h1 className={styles.spotName}>{spot.name}</h1>
+              <p className={styles.spotAddress}>
+                <IconPin className={styles.addressIcon} />
+                {spot.address}
+              </p>
             </div>
 
             <div className={styles.spotParkingRow}>
@@ -516,8 +511,12 @@ export default function DetailPage() {
           return (
             <section className={styles.sectionAlt}>
               <div className={styles.alertBanner}>
-                <IconAlert className={styles.alertIcon} />
-                <span>{spot.name}이(가) 혼잡해요 &mdash; 비슷한 분위기의 여유로운 곳을 추천해드립니다</span>
+                <img
+                  src={getLevelImage(level)}
+                  alt={getLevelLabel(level)}
+                  className={styles.alertBadge}
+                />
+                <span>{spot.name}{josaIGa(spot.name)} 혼잡해요 &mdash; 비슷한 분위기의 여유로운 곳을 추천해드립니다</span>
               </div>
               <div className={styles.sectionTitleRow}>
                 <h2 className={styles.sectionTitleMain}>관광지 추천</h2>
