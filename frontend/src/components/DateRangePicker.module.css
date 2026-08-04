@@ -33,6 +33,16 @@
   color: var(--color-primary);
 }
 
+.trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.trigger:disabled:hover {
+  border-color: var(--color-border);
+  color: var(--color-sub);
+}
+
 .calIcon {
   flex-shrink: 0;
   color: inherit;

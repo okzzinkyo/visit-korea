@@ -7,6 +7,7 @@ interface Props {
   minDate: Date;
   maxDate: Date;
   onConfirm: (start: Date, end: Date) => void;
+  disabled?: boolean;
 }
 
 const DAY_NAMES_KO = ['일', '월', '화', '수', '목', '금', '토'];
@@ -23,7 +24,7 @@ function startOfDay(d: Date) {
   return r;
 }
 
-export default function DateRangePicker({ startDate, endDate, minDate, maxDate, onConfirm }: Props) {
+export default function DateRangePicker({ startDate, endDate, minDate, maxDate, onConfirm, disabled }: Props) {
   const today = useMemo(() => startOfDay(new Date()), []);
 
   const [open, setOpen] = useState(false);
@@ -155,7 +156,8 @@ export default function DateRangePicker({ startDate, endDate, minDate, maxDate, 
       {/* 트리거 버튼 */}
       <button
         className={`${styles.trigger} ${open ? styles.triggerActive : ''}`}
-        onClick={() => setOpen(v => !v)}
+        onClick={() => !disabled && setOpen(v => !v)}
+        disabled={disabled}
         type="button"
       >
         <svg className={styles.calIcon} width="13" height="13" viewBox="0 0 20 20" fill="none">
@@ -168,7 +170,7 @@ export default function DateRangePicker({ startDate, endDate, minDate, maxDate, 
       </button>
 
       {/* 캘린더 팝업 */}
-      {open && (
+      {open && !disabled && (
         <div className={styles.popup}>
           {/* 안내 */}
           <p className={styles.hint}>

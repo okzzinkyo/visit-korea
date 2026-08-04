@@ -180,7 +180,7 @@ export default function DetailPage() {
   const daysParam = daysBetween(confirmedStart, confirmedEnd);
   const todayISO = useMemo(() => toISODate(new Date()), []);
 
-  const { data: forecast, isFetching: isForecastFetching } = useQuery({
+  const { data: forecast, isFetching: isForecastFetching, isError: isForecastError, refetch: refetchForecast } = useQuery({
     queryKey: ['place-forecast', spotId, startParam, daysParam],
     queryFn: () => fetchPlaceForecast(spotId!, { start: startParam, days: daysParam }),
     enabled: !!spotId,
@@ -220,6 +220,10 @@ export default function DetailPage() {
     () => forecast ? padToSeven(forecast.followingPeriod.items, todayISO, festivalsById) : [],
     [forecast, todayISO, festivalsById],
   );
+
+  const hasNoForecastData = !!forecast
+    && forecast.selectedPeriod.items.length === 0
+    && forecast.followingPeriod.items.length === 0;
 
   const { data: pattern } = useQuery({
     queryKey: ['place-congestion-pattern', spotId],
@@ -400,17 +404,35 @@ export default function DetailPage() {
                 minDate={today}
                 maxDate={maxDate}
                 onConfirm={handleRangeConfirm}
+                disabled={hasNoForecastData}
               />
             </div>
 
-            <WeekGrid days={thisWeek} isLoading={isForecastFetching && !forecast} />
+            {isForecastError || hasNoForecastData ? (
+              <div className={styles.forecastError}>
+                <p className={styles.forecastErrorText}>
+                  {isForecastError ? '예측 혼잡도를 불러오지 못했어요.' : '이 관광지는 아직 예측 데이터가 없어요.'}
+                </p>
+                {isForecastError && (
+                  <button className={styles.forecastErrorRetry} onClick={() => refetchForecast()}>
+                    <IconRefresh />
+                    다시 시도
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                <WeekGrid days={thisWeek} isLoading={isForecastFetching && !forecast} />
 
-            <div className={styles.nextWeekHeader}>
-              <div className={styles.divider} />
-              <span className={styles.nextWeekLabel}>이후 7일</span>
-              <div className={styles.divider} />
-            </div>
-            <WeekGrid days={nextWeek} isLoading={isForecastFetching && !forecast} />
+                <div className={styles.nextWeekPanel}>
+                  <div className={styles.nextWeekHeader}>
+                    <span className={styles.nextWeekLabel}>이후 7일</span>
+                    <span className={styles.nextWeekHint}>선택한 기간 다음에 자동으로 표시돼요</span>
+                  </div>
+                  <WeekGrid days={nextWeek} isLoading={isForecastFetching && !forecast} />
+                </div>
+              </>
+            )}
 
             {upcomingFestivals.length > 0 && (
               <div className={styles.festivalNotice}>
