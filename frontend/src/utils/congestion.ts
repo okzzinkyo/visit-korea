@@ -1,10 +1,10 @@
 import type { CongestionLevel } from '../types';
 
 export function getCongestionLevel(rate: number): CongestionLevel {
-  if (rate <= 40) return 1;
-  if (rate <= 55) return 2;
-  if (rate <= 70) return 3;
-  if (rate <= 84) return 4;
+  if (rate <= 20) return 1;
+  if (rate <= 40) return 2;
+  if (rate <= 60) return 3;
+  if (rate <= 80) return 4;
   return 5;
 }
 
