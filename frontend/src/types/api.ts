@@ -112,6 +112,11 @@ export interface TodayCongestionResponse {
   label: string;
 }
 
+export interface PlaceViewResponse {
+  placeId: number;
+  viewCount: number;
+}
+
 export interface PlaceDetailResponse {
   id: number;
   name: string;

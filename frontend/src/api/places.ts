@@ -1,4 +1,4 @@
-import { apiGet } from './client';
+import { apiGet, apiPost } from './client';
 import type {
   PlaceCompanionResponse,
   PlaceCongestionPatternResponse,
@@ -7,6 +7,7 @@ import type {
   PlaceForecastResponse,
   PlaceSearchResponse,
   PlaceSuggestionsResponse,
+  PlaceViewResponse,
 } from '../types/api';
 
 export interface FetchPlacesParams {
@@ -30,6 +31,10 @@ export function fetchPlaces(params: FetchPlacesParams): Promise<PlaceSearchRespo
 
 export function fetchPlaceDetail(placeId: string | number): Promise<PlaceDetailResponse> {
   return apiGet<PlaceDetailResponse>(`/api/places/${placeId}`);
+}
+
+export function countPlaceView(placeId: string | number): Promise<PlaceViewResponse> {
+  return apiPost<PlaceViewResponse>(`/api/places/${placeId}/views`);
 }
 
 export interface FetchPlaceForecastParams {

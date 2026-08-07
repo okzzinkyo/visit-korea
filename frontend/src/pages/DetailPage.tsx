@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Header from '../components/Header';
@@ -9,6 +9,7 @@ import { getCongestionLevel, getLevelColor, getLevelImage, getLevelLabel } from 
 import { getSpotGradient } from '../utils/spotGradient';
 import { josaIGa } from '../utils/josa';
 import {
+  countPlaceView,
   fetchPlaceCompanions,
   fetchPlaceCongestionPattern,
   fetchPlaceDetail,
@@ -157,6 +158,13 @@ export default function DetailPage() {
     queryFn: () => fetchPlaceDetail(spotId!),
     enabled: !!spotId,
   });
+
+  const viewedSpotId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!spotId || viewedSpotId.current === spotId) return;
+    viewedSpotId.current = spotId;
+    countPlaceView(spotId).catch(() => {});
+  }, [spotId]);
 
   const [descExpanded, setDescExpanded] = useState(false);
   const [imgError, setImgError] = useState(false);
