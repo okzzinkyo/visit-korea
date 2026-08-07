@@ -21,16 +21,25 @@
   width: min(680px, calc(100% - 48px));
 }
 
-/* 범례 — 지도 우하단 */
+/* 범례 — 지도 우하단. 검색바(overlaySearch)는 bottom:-26px + 높이 54px라 지도 하단 기준 위로 28px까지
+   차지함 — 범례 bottom을 그보다 여유 있게 띄워 겹치지 않게 하면서, 기장군이 있는 우상단은 비워둠 */
+/* 지도 위에 바로 얹으면 레벨1(연한 하늘색)이 바다색과 섞여 안 보이므로 검색바와 같은 frosted 카드로 감쌈 */
 .legend {
   position: absolute;
-  bottom: 20px;
+  bottom: 40px;
   right: 20px;
   z-index: 100;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.95);
 }
 
 .legendEmojis {
@@ -45,22 +54,13 @@
   object-fit: contain;
 }
 
-.legendBar {
+.legendScale {
+  display: flex;
+  justify-content: space-between;
   width: 168px;
-  height: 6px;
-  border-radius: 3px;
-  background: linear-gradient(to right,
-    #5bbfdf 0%,
-    #5bbfdf 20%,
-    #52c87c 20%,
-    #52c87c 40%,
-    #e8c844 40%,
-    #e8c844 60%,
-    #f08060 60%,
-    #f08060 80%,
-    #e06868 80%,
-    #e06868 100%
-  );
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-sub);
 }
 
 /* ── 콘텐츠 — 단일 컬럼, 섹션별 row ── */
@@ -94,6 +94,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 20px;
 }
 
 .sectionHeader .sectionTitle {
@@ -201,30 +202,25 @@
 
 .tabGroup {
   display: flex;
-  gap: 4px;
-  padding: 3px;
-  border-radius: 20px;
-  background: #f0f0f0;
-  margin-bottom: 20px;
+  gap: 18px;
 }
 
 .tabBtn {
-  padding: 6px 16px;
+  padding: 4px 0 6px;
   border: none;
-  border-radius: 16px;
+  border-bottom: 2px solid transparent;
   background: none;
   font-size: 13px;
   font-weight: 700;
   color: var(--color-sub);
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s, color 0.15s;
+  transition: color 0.15s, border-color 0.15s;
 }
 
 .tabBtnActive {
-  background: #fff;
-  color: var(--color-text);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 /* 접전지 — 3컬럼 그리드 */
@@ -292,20 +288,27 @@
 }
 
 /* ── 반응형 ── */
-@media (max-width: 900px) {
+/* 3위까지의 순위가 한눈에 보여야 하므로 3열 → 2열이 아니라 3열 → 1열(세로 랭킹)로 바로 전환 */
+@media (max-width: 760px) {
   .hotGrid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 히든 플레이스 카드는 이미지(200px 고정) + 텍스트 2열 구성이라, 2열 그리드에서 카드 폭이 좁아지면
+   "향후 30일 평균 예측 혼잡도 00%" 한 줄이 들어갈 자리가 부족해 어중간하게 줄바꿈됨(~600~960px 구간).
+   그 구간을 아예 1열로 건너뛰어 카드가 항상 충분한 폭을 갖게 함 */
+@media (max-width: 960px) {
+  .hiddenGrid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 600px) {
-  .hotGrid,
-  .hiddenGrid {
-    grid-template-columns: 1fr;
-  }
-
   .content {
-    padding: 28px 16px 60px;
+    /* overlaySearch가 지도 하단 아래로 26px 겹치는데, 예전 28px 상단 패딩은 그걸 겨우 덮는 수준이라
+       입력창 바로 아래 여백이 거의 없어 보였음 — 겹침分 + 여유를 반영해 64px로 확보 */
+    padding: 64px 16px 60px;
   }
 
   .infoBubble {

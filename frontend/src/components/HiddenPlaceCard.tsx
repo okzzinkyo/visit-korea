@@ -18,7 +18,7 @@ export default function HiddenPlaceCard({ place }: Props) {
   const goDetail = () => navigate(`/detail/${place.id}`);
 
   return (
-    <article className={styles.card} onClick={goDetail}>
+    <article className={styles.card} onClick={goDetail} style={{ '--card-accent': levelColor } as React.CSSProperties}>
       <div className={styles.img} style={showImg ? undefined : { background: getSpotGradient(String(place.id)) }}>
         {showImg && (
           <img src={place.imageUrl} alt={place.name} className={styles.imgPhoto} onError={() => setImgError(true)} />
@@ -33,18 +33,19 @@ export default function HiddenPlaceCard({ place }: Props) {
             부산시 {place.districtName}
           </span>
           <p className={styles.desc}>
-            향후 30일 평균 예측 혼잡도{' '}
-            <strong className={styles.descScore} style={{ color: levelColor }}>
-              {place.averageCongestion.score}%
-            </strong>
-            <br />
-            여유롭게 즐기기 딱 좋은 시기입니다.
+            <span className={styles.descLine}>
+              향후 30일 평균 예측 혼잡도{' '}
+              <strong className={styles.descScore} style={{ color: levelColor }}>
+                {place.averageCongestion.score}%
+              </strong>
+            </span>
+            <span className={styles.descLine}>여유롭게 즐기기 딱 좋은 시기입니다.</span>
           </p>
         </div>
         <div className={styles.cardFooter}>
-          <button className={styles.cta} onClick={e => { e.stopPropagation(); goDetail(); }}>
-            자세히 보기
-          </button>
+          <span className={styles.cta} aria-label="자세히 보기">
+            <span className={styles.ctaLine} />
+          </span>
         </div>
       </div>
     </article>

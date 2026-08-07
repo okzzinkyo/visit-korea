@@ -66,7 +66,10 @@ export default function MainPage() {
               <img key={l} src={getLevelImage(l)} alt={getLevelLabel(l)} className={styles.legendImg} />
             ))}
           </div>
-          <div className={styles.legendBar} />
+          <div className={styles.legendScale}>
+            <span>여유</span>
+            <span>혼잡</span>
+          </div>
         </div>
       </div>
 
