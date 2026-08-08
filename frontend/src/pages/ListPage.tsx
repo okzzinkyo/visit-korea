@@ -220,17 +220,20 @@ export default function ListPage() {
             onMouseUp={onChipMouseUp}
             onMouseLeave={onChipMouseUp}
           >
-            {(data?.districtFacets ?? []).map(facet => (
+            {(data?.districtFacets ?? []).map(facet => {
+              const isActive = (facet.districtCode ?? '') === activeCode;
+              return (
               <button
                 key={facet.districtCode ?? 'all'}
-                ref={facet.selected ? activeChipRef : undefined}
-                className={`${styles.chip} ${facet.selected ? styles.chipActive : ''}`}
+                ref={isActive ? activeChipRef : undefined}
+                className={`${styles.chip} ${isActive ? styles.chipActive : ''}`}
                 onClick={() => { if (!dragState.current.moved) selectDistrict(facet.districtCode ?? ''); }}
               >
                 {facet.districtName}
                 <span className={styles.chipCount}>{facet.count}</span>
               </button>
-            ))}
+              );
+            })}
           </div>
 
           {data?.districtSuggestion.visible && bannerDistrict && (

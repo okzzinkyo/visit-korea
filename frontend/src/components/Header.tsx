@@ -18,7 +18,7 @@ export default function Header() {
           <span className={styles.liveDot} />
           <div className={styles.todayText}>
             <span className={styles.todayDate}>{today}</span>
-            <span className={styles.todayLabel}>오늘 구별 혼잡도 평균</span>
+            <span className={styles.todayLabel}>오늘 기준 혼잡도</span>
           </div>
         </div>
       </div>

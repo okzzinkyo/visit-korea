@@ -9,6 +9,7 @@ export default function SpotCard({ place }: { place: PlaceCardResponse }) {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
   const rate  = place.last7DaysAverageCongestion.score;
+  const hasCongestion = rate > 0;
   const level = getCongestionLevel(rate);
   const color = getLevelColor(level);
   const label = getLevelLabel(level);
@@ -24,8 +25,12 @@ export default function SpotCard({ place }: { place: PlaceCardResponse }) {
         )}
         <div className={styles.imgOverlay} />
         <div className={styles.imgScrim} />
-        <span className={styles.imgLabel}>{label}</span>
-        <img src={getLevelImage(level)} alt="" className={styles.levelImg} />
+        {hasCongestion && (
+          <>
+            <span className={styles.imgLabel}>{label}</span>
+            <img src={getLevelImage(level)} alt="" className={styles.levelImg} />
+          </>
+        )}
       </div>
       <div className={styles.body}>
         <p className={styles.name}>{place.name}</p>
@@ -33,13 +38,17 @@ export default function SpotCard({ place }: { place: PlaceCardResponse }) {
           <span className={styles.districtDot} style={{ background: color }} />
           {place.districtName}
         </p>
-        <span className={styles.avgLabel}>지난 7일 평균</span>
-        <div className={styles.barRow}>
-          <div className={styles.bar}>
-            <div className={styles.barFill} style={{ width: `${rate}%`, background: color }} />
-          </div>
-          <span className={styles.rate} style={{ color }}>{rate}%</span>
-        </div>
+        {hasCongestion && (
+          <>
+            <span className={styles.avgLabel}>오늘의 인기</span>
+            <div className={styles.barRow}>
+              <div className={styles.bar}>
+                <div className={styles.barFill} style={{ width: `${rate}%`, background: color }} />
+              </div>
+              <span className={styles.rate} style={{ color }}>{rate}%</span>
+            </div>
+          </>
+        )}
         <div className={styles.footer}>
           <span className={styles.views}>{place.last7DaysDetailViewCount.toLocaleString()}명이 눈치 보는 중!</span>
           <span className={styles.cta} aria-label="자세히 보기">
