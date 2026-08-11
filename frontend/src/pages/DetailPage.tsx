@@ -612,32 +612,28 @@ export default function DetailPage() {
           );
         })()}
 
-        <section className={styles.sectionRelated}>
-          <div className={styles.sectionTitleRow}>
-            <h2 className={styles.sectionTitleMain}>함께 가기 좋아요</h2>
-            {relatedSpots.length === 4 && (
-              <button
-                className={styles.btnRefresh}
-                onClick={() => refetchCompanions()}
-                disabled={isCompanionsFetching}
-                aria-label="다른 추천 보기"
-              >
-                <IconRefresh />
-              </button>
-            )}
-          </div>
-          {relatedSpots.length > 0 ? (
+        {relatedSpots.length > 0 && (
+          <section className={styles.sectionRelated}>
+            <div className={styles.sectionTitleRow}>
+              <h2 className={styles.sectionTitleMain}>함께 가기 좋아요</h2>
+              {relatedSpots.length === 4 && (
+                <button
+                  className={styles.btnRefresh}
+                  onClick={() => refetchCompanions()}
+                  disabled={isCompanionsFetching}
+                  aria-label="다른 추천 보기"
+                >
+                  <IconRefresh />
+                </button>
+              )}
+            </div>
             <div className={styles.cardGrid}>
               {relatedSpots.map(s => (
                 <RecCard key={s.id} spot={s} navigate={navigate} />
               ))}
             </div>
-          ) : (
-            <p className={styles.emptyRelated}>
-              {isCompanionsFetching ? '불러오는 중...' : '추천할 관광지가 아직 없어요'}
-            </p>
-          )}
-        </section>
+          </section>
+        )}
       </main>
     </div>
   );
