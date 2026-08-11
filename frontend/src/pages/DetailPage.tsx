@@ -28,6 +28,14 @@ const LEVEL_LABELS_SHORT: Record<CongestionLevel, string> = {
   1: '눈치성공', 2: '여유', 3: '보통', 4: '혼잡', 5: '눈치실패',
 };
 
+const LEVEL_TIP: Record<CongestionLevel, string> = {
+  1: '지금은 거의 대기 없어요. 편하게 다녀오세요!',
+  2: '가볍게 다녀오기 좋은 날이에요.',
+  3: '평소만큼 붐벼요. 무리 없는 수준!',
+  4: '조금 붐벼요. 이른 시간 방문을 추천해요.',
+  5: '많이 붐벼요. 대중교통 이용을 권해요!',
+};
+
 function IconFestival({ className, size = 14 }: { className?: string; size?: number }) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -180,6 +188,8 @@ export default function DetailPage() {
   const [descExpanded, setDescExpanded] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [recTab, setRecTab] = useState<'nearby' | 'similar'>('nearby');
+  // 캘린더 날짜 셀 ↔ 아래 축제 정보 리스트 상호 하이라이트 — 둘 중 어느 쪽을 hover해도 같은 축제의 반대편이 강조됨
+  const [highlightedFestivalId, setHighlightedFestivalId] = useState<number | null>(null);
 
   const today = useMemo(() => startOfDay(new Date()), []);
   const maxDate = useMemo(() => {
@@ -243,6 +253,13 @@ export default function DetailPage() {
   const hasNoForecastData = !!forecast
     && forecast.selectedPeriod.items.length === 0
     && forecast.followingPeriod.items.length === 0;
+
+  // 두 줄을 합쳐도 14일이 보장되지 않음(선택 기간이 7일 미만이거나 30일 예측 범위 끝자락에서 이후 7일이 partial일 수 있음) — 실제 데이터 있는 날짜만 비교
+  const recommendedDate = useMemo(() => {
+    const days = [...thisWeek, ...nextWeek].filter((d): d is DayEntry & { rate: number } => d.rate !== null);
+    if (days.length === 0) return null;
+    return days.reduce((best, d) => (d.rate < best.rate ? d : best)).date;
+  }, [thisWeek, nextWeek]);
 
   const { data: pattern } = useQuery({
     queryKey: ['place-congestion-pattern', spotId],
@@ -427,6 +444,11 @@ export default function DetailPage() {
               />
             </div>
 
+            <p className={styles.forecastCaution}>
+              <IconInfo className={styles.forecastCautionIcon} />
+              현장 상황에 따라 예측 정보와 다를 수 있으니 유의 바랍니다.
+            </p>
+
             {isForecastError || hasNoForecastData ? (
               <div className={styles.forecastError}>
                 <p className={styles.forecastErrorText}>
@@ -441,14 +463,26 @@ export default function DetailPage() {
               </div>
             ) : (
               <>
-                <WeekGrid days={thisWeek} isLoading={isForecastFetching && !forecast} />
+                <WeekGrid
+                  days={thisWeek}
+                  isLoading={isForecastFetching && !forecast}
+                  recommendedDate={recommendedDate}
+                  highlightedFestivalId={highlightedFestivalId}
+                  onHighlightFestival={setHighlightedFestivalId}
+                />
 
                 <div className={styles.nextWeekPanel}>
                   <div className={styles.nextWeekHeader}>
                     <span className={styles.nextWeekLabel}>이후 7일</span>
                     <span className={styles.nextWeekHint}>선택한 기간 다음에 자동으로 표시돼요</span>
                   </div>
-                  <WeekGrid days={nextWeek} isLoading={isForecastFetching && !forecast} />
+                  <WeekGrid
+                    days={nextWeek}
+                    isLoading={isForecastFetching && !forecast}
+                    recommendedDate={recommendedDate}
+                    highlightedFestivalId={highlightedFestivalId}
+                    onHighlightFestival={setHighlightedFestivalId}
+                  />
                 </div>
               </>
             )}
@@ -456,21 +490,19 @@ export default function DetailPage() {
             {upcomingFestivals.length > 0 && (
               <div className={styles.festivalNotice}>
                 <h3 className={styles.festivalTitle}>축제 정보</h3>
-                <p className={styles.festivalCaution}>
-                  <IconInfo className={styles.festivalCautionIcon} />
-                  현장 상황에 따라 예측 정보와 다를 수 있으니 유의 바랍니다.
-                </p>
                 <div className={styles.festivalList}>
                   {upcomingFestivals.map(f => {
                     const go = () => window.open(festivalSearchUrl(f.name), '_blank', 'noopener,noreferrer');
                     return (
                       <div
                         key={f.id}
-                        className={styles.festivalRow}
+                        className={`${styles.festivalRow} ${highlightedFestivalId === f.id ? styles.festivalRowHighlighted : ''}`}
                         onClick={go}
                         role="link"
                         tabIndex={0}
                         onKeyDown={e => e.key === 'Enter' && go()}
+                        onMouseEnter={() => setHighlightedFestivalId(f.id)}
+                        onMouseLeave={() => setHighlightedFestivalId(null)}
                       >
                         <span className={styles.festivalBadge}>
                           <IconFestival />
@@ -486,29 +518,18 @@ export default function DetailPage() {
                 </div>
               </div>
             )}
-
             {!!pattern && pattern.items.length > 0 && (
               <div className={styles.patternSection}>
                 <div className={styles.patternHeader}>
                   <h3 className={styles.patternTitle}>요일별 혼잡 패턴</h3>
-                  <span className={styles.patternSub}>예측 기간 기준 평균</span>
+                  <span className={styles.patternSub}>향후 30일 기준 평균</span>
                 </div>
-                {(pattern.summary.crowdedDays.length > 0 || pattern.summary.relaxedDays.length > 0) && (
-                  <div className={styles.patternInsight}>
-                    {pattern.summary.crowdedDays.length > 0 && (
-                      <span className={styles.chipBusy}>혼잡 {pattern.summary.crowdedDays.join('·')}요일</span>
-                    )}
-                    {pattern.summary.relaxedDays.length > 0 && (
-                      <span className={styles.chipCalm}>여유 {pattern.summary.relaxedDays.join('·')}요일</span>
-                    )}
-                  </div>
-                )}
                 <div className={styles.vchartBars}>
                   {pattern.items.map(item => {
                     const lv = getCongestionLevel(item.averageCongestion.score);
                     const isCrowded = highlightGroup === 'crowded' && pattern.summary.crowdedDays.includes(item.dayLabel);
                     const isRelaxed = highlightGroup === 'relaxed' && pattern.summary.relaxedDays.includes(item.dayLabel);
-                    const bg = isCrowded ? 'var(--color-secondary)' : isRelaxed ? 'var(--level-2)' : 'var(--color-primary)';
+                    const bg = isCrowded ? 'var(--color-secondary)' : 'var(--color-primary)';
                     const opacity = isCrowded || isRelaxed ? 1 : 0.25 + (lv - 1) * 0.15;
                     return (
                       <div key={item.dayOfWeek} className={styles.vchartCol}>
@@ -530,14 +551,13 @@ export default function DetailPage() {
                   {pattern.items.map(item => {
                     const lv = getCongestionLevel(item.averageCongestion.score);
                     const isCrowded = highlightGroup === 'crowded' && pattern.summary.crowdedDays.includes(item.dayLabel);
-                    const isRelaxed = highlightGroup === 'relaxed' && pattern.summary.relaxedDays.includes(item.dayLabel);
                     const isWeekend = WEEKENDS.has(item.dayLabel);
                     return (
                       <div key={item.dayOfWeek} className={styles.vchartLabel}>
                         <span className={`${styles.vchartLabelDay} ${isWeekend ? styles.vchartLabelDayWeekend : ''}`}>{item.dayLabel}</span>
                         <span
                           className={styles.vchartLabelLv}
-                          style={{ color: isCrowded ? 'var(--color-secondary)' : isRelaxed ? 'var(--level-2)' : 'var(--color-sub)' }}
+                          style={{ color: isCrowded ? 'var(--color-secondary)' : 'var(--color-sub)' }}
                         >
                           {LEVEL_LABELS_SHORT[lv]}
                         </span>
@@ -676,7 +696,13 @@ function RecCard({ spot, navigate }: {
   );
 }
 
-function WeekGrid({ days, isLoading }: { days: DayEntry[]; isLoading: boolean }) {
+function WeekGrid({ days, isLoading, recommendedDate, highlightedFestivalId, onHighlightFestival }: {
+  days: DayEntry[];
+  isLoading: boolean;
+  recommendedDate: string | null;
+  highlightedFestivalId: number | null;
+  onHighlightFestival: (id: number | null) => void;
+}) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
   if (isLoading) {
@@ -693,88 +719,122 @@ function WeekGrid({ days, isLoading }: { days: DayEntry[]; isLoading: boolean })
     );
   }
 
+  // 데스크톱 hover 팝업과 모바일 클릭 아코디언이 내용을 공유 — 모바일엔 hover가 없으니 탭하면 그리드 아래
+  // 전체 폭으로 펼쳐지는 패널로 보여주고(같은 activeIdx 토글 재사용), 팝업은 그쪽에서만 숨김
+  const popupBody = (d: DayEntry, color: string, hasFestival: boolean) => (
+    <>
+      <div className={styles.tooltipHeader}>
+        <img
+          src={getLevelImage(d.level!)}
+          alt={getLevelLabel(d.level!)}
+          className={styles.tooltipLevelImg}
+        />
+        <div>
+          <p className={styles.tooltipDate}>
+            {d.day}요일 {d.date}
+          </p>
+          <p className={styles.tooltipLevelLabel} style={{ color }}>
+            {getLevelLabel(d.level!)} · {d.rate}%
+          </p>
+        </div>
+      </div>
+      <p className={styles.tooltipSay}>“{LEVEL_TIP[d.level!]}”</p>
+      {hasFestival && (
+        <div className={styles.tooltipFestivalsBlock}>
+          <p className={styles.tooltipFestivalsHeader}>이 날의 축제</p>
+          <div className={styles.tooltipFestivalsList}>
+            {d.festivals.map(f => (
+              <a
+                key={f.id}
+                href={festivalSearchUrl(f.name)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.tooltipFestivalRow}
+                onMouseEnter={() => onHighlightFestival(f.id)}
+                onMouseLeave={() => onHighlightFestival(null)}
+              >
+                <span
+                  className={styles.tooltipFestivalRowDot}
+                  style={{ background: highlightedFestivalId === f.id ? 'var(--color-secondary)' : 'var(--color-secondary-light)' }}
+                />
+                <span className={styles.tooltipFestivalRowBody}>
+                  <p className={styles.tooltipFestivalRowName}>{f.name}</p>
+                  <p className={styles.tooltipFestivalRowMeta}>{f.displayPeriodText} · {f.placeName}</p>
+                </span>
+              </a>
+            ))}
+          </div>
+          <p className={styles.tooltipFestivalCaution}>축제 기간에는 예측과 실제 혼잡도가 더 차이날 수 있어요.</p>
+        </div>
+      )}
+    </>
+  );
+
+  const activeDay = activeIdx !== null ? days[activeIdx] : null;
+  const activeColor = activeDay && activeDay.level !== null ? getLevelColor(activeDay.level) : 'var(--color-sub)';
+  const activeHasFestival = !!activeDay && activeDay.festivals.length > 0;
+
   return (
     <div className={styles.weekGrid}>
       {days.map((d, i) => {
-        const isWeekend = WEEKENDS.has(d.day);
+        const isSaturday = d.day === '토';
+        const isSunday = d.day === '일';
         const isEmpty = d.level === null;
         const color = isEmpty ? 'var(--color-sub)' : getLevelColor(d.level!);
         const hasFestival = d.festivals.length > 0;
         const isActive = activeIdx === i;
+        const isRecommended = !isEmpty && recommendedDate !== null && d.date === recommendedDate;
+        const isCrossHighlighted = hasFestival && d.festivals.some(f => f.id === highlightedFestivalId);
+        const stateClass = isCrossHighlighted
+          ? styles.dayCellHighlighted
+          : (isActive && !isEmpty ? styles.dayCellActive : '');
         const tooltipAlign = i <= 1 ? styles.tooltipLeft : i >= 5 ? styles.tooltipRight : styles.tooltipCenter;
 
         return (
           <div
             key={i}
-            className={`${styles.dayCell} ${isEmpty ? styles.dayCellEmpty : ''} ${isActive && !isEmpty ? styles.dayCellActive : ''}`}
+            className={`${styles.dayCell} ${isEmpty ? styles.dayCellEmpty : ''} ${stateClass}`}
+            style={{ '--cell-accent': color } as React.CSSProperties}
             onMouseEnter={() => !isEmpty && setActiveIdx(i)}
             onMouseLeave={() => setActiveIdx(null)}
             onClick={() => !isEmpty && setActiveIdx(v => v === i ? null : i)}
           >
-            <span className={`${styles.dayLabel} ${isWeekend ? styles.dayLabelWeekend : ''}`}>
-              {d.isToday ? '오늘' : d.day}
-            </span>
-            <span className={styles.dayDateRow}>
+            {isRecommended && <span className={styles.recommendBadge}>★ 추천</span>}
+            <div className={styles.dayTopRow}>
+              <span className={`${styles.dayLabel} ${isSaturday ? styles.dayLabelSaturday : ''} ${isSunday ? styles.dayLabelSunday : ''}`}>
+                {d.isToday ? '오늘' : d.day}
+              </span>
               <span className={styles.dayDate}>
                 {d.isToday ? <b>{d.date}</b> : d.date}
               </span>
-              {hasFestival && <span className={styles.festivalDot} />}
+            </div>
+            <span className={styles.dayImageWrap}>
+              {isEmpty ? (
+                <div className={styles.dayLevelEmpty}>—</div>
+              ) : (
+                <img
+                  src={getLevelImage(d.level!)}
+                  alt={getLevelLabel(d.level!)}
+                  className={styles.dayLevelImg}
+                />
+              )}
+              {hasFestival && <span className={styles.dayFestivalFlag}>⚑</span>}
             </span>
-            {isEmpty ? (
-              <div className={styles.dayLevelEmpty}>—</div>
-            ) : (
-              <img
-                src={getLevelImage(d.level!)}
-                alt={getLevelLabel(d.level!)}
-                className={styles.dayLevelImg}
-              />
-            )}
-            <span className={styles.dayLevelLabel}>
-              {isEmpty ? '' : LEVEL_LABELS_SHORT[d.level!]}
-            </span>
+            {!isEmpty && <span className={styles.dayRate}>{d.rate}%</span>}
 
             {isActive && !isEmpty && (
               <div className={`${styles.tooltip} ${tooltipAlign}`}>
-                <div className={styles.tooltipHeader}>
-                  <img
-                    src={getLevelImage(d.level!)}
-                    alt={getLevelLabel(d.level!)}
-                    className={styles.tooltipLevelImg}
-                  />
-                  <div>
-                    <p className={styles.tooltipDate}>
-                      {d.day}요일 {d.date}
-                    </p>
-                    <p className={styles.tooltipLevelLabel}>
-                      {getLevelLabel(d.level!)}
-                    </p>
-                  </div>
-                </div>
-                <div className={styles.tooltipBarRow}>
-                  <div className={styles.tooltipBar}>
-                    <div
-                      className={styles.tooltipBarFill}
-                      style={{ width: `${d.rate ?? 0}%`, background: color }}
-                    />
-                  </div>
-                  <span className={styles.tooltipRate}>{d.rate}%</span>
-                </div>
-                {hasFestival && (
-                  <div className={styles.tooltipFestivals}>
-                    {d.festivals.map(f => (
-                      <div key={f.id} className={styles.tooltipFestivalItem}>
-                        <IconFestival className={styles.tooltipFestivalIcon} />
-                        <span className={styles.tooltipFestivalName}>{f.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className={styles.tooltipArrow} />
+                {popupBody(d, color, hasFestival)}
               </div>
             )}
           </div>
         );
       })}
+      {activeDay && activeDay.level !== null && (
+        <div className={styles.mobileAccordion}>
+          {popupBody(activeDay, activeColor, activeHasFestival)}
+        </div>
+      )}
     </div>
   );
 }
