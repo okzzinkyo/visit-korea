@@ -160,6 +160,7 @@ export interface FestivalItemResponse {
   id: number;
   name: string;
   placeName: string;
+  placeAddress: string;
   startDate: string;
   endDate: string;
   displayPeriodText: string;

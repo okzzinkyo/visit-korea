@@ -28,12 +28,23 @@ const LEVEL_LABELS_SHORT: Record<CongestionLevel, string> = {
   1: '눈치성공', 2: '여유', 3: '보통', 4: '혼잡', 5: '눈치실패',
 };
 
-function IconFestival({ className }: { className?: string }) {
+function IconFestival({ className, size = 14 }: { className?: string; size?: number }) {
   return (
-    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none"
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 21V4" />
       <path d="M4 4h13l-2.5 4L17 12H4" />
+    </svg>
+  );
+}
+
+function IconInfo({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="12" height="12" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <line x1="12" y1="11" x2="12" y2="16.2" />
+      <circle cx="12" cy="7.6" r="0.6" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -444,27 +455,35 @@ export default function DetailPage() {
 
             {upcomingFestivals.length > 0 && (
               <div className={styles.festivalNotice}>
-                {upcomingFestivals.map(f => {
-                  const go = () => window.open(festivalSearchUrl(f.name), '_blank', 'noopener,noreferrer');
-                  return (
-                    <div
-                      key={f.id}
-                      className={styles.festivalItem}
-                      onClick={go}
-                      role="link"
-                      tabIndex={0}
-                      onKeyDown={e => e.key === 'Enter' && go()}
-                    >
-                      <IconFestival className={styles.festivalIcon} />
-                      <div>
-                        <p className={styles.festivalName}>{f.name}</p>
-                        <p className={styles.festivalPeriod}>
-                          {f.placeName} · {f.displayPeriodText}
-                        </p>
+                <h3 className={styles.festivalTitle}>축제 정보</h3>
+                <p className={styles.festivalCaution}>
+                  <IconInfo className={styles.festivalCautionIcon} />
+                  현장 상황에 따라 예측 정보와 다를 수 있으니 유의 바랍니다.
+                </p>
+                <div className={styles.festivalList}>
+                  {upcomingFestivals.map(f => {
+                    const go = () => window.open(festivalSearchUrl(f.name), '_blank', 'noopener,noreferrer');
+                    return (
+                      <div
+                        key={f.id}
+                        className={styles.festivalRow}
+                        onClick={go}
+                        role="link"
+                        tabIndex={0}
+                        onKeyDown={e => e.key === 'Enter' && go()}
+                      >
+                        <span className={styles.festivalBadge}>
+                          <IconFestival />
+                        </span>
+                        <div className={styles.festivalInfo}>
+                          <p className={styles.festivalName}>{f.name}</p>
+                          <p className={styles.festivalPlace}>{f.placeName}</p>
+                        </div>
+                        <span className={styles.festivalDateTag}>{f.displayPeriodText}</span>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -695,8 +714,11 @@ function WeekGrid({ days, isLoading }: { days: DayEntry[]; isLoading: boolean })
             <span className={`${styles.dayLabel} ${isWeekend ? styles.dayLabelWeekend : ''}`}>
               {d.isToday ? '오늘' : d.day}
             </span>
-            <span className={styles.dayDate}>
-              {d.isToday ? <b>{d.date}</b> : d.date}
+            <span className={styles.dayDateRow}>
+              <span className={styles.dayDate}>
+                {d.isToday ? <b>{d.date}</b> : d.date}
+              </span>
+              {hasFestival && <span className={styles.festivalDot} />}
             </span>
             {isEmpty ? (
               <div className={styles.dayLevelEmpty}>—</div>
@@ -707,10 +729,9 @@ function WeekGrid({ days, isLoading }: { days: DayEntry[]; isLoading: boolean })
                 className={styles.dayLevelImg}
               />
             )}
-            <span className={styles.dayLevelLabel} style={{ color }}>
+            <span className={styles.dayLevelLabel}>
               {isEmpty ? '' : LEVEL_LABELS_SHORT[d.level!]}
             </span>
-            {hasFestival && <div className={styles.festivalDot} />}
 
             {isActive && !isEmpty && (
               <div className={`${styles.tooltip} ${tooltipAlign}`}>
@@ -724,7 +745,7 @@ function WeekGrid({ days, isLoading }: { days: DayEntry[]; isLoading: boolean })
                     <p className={styles.tooltipDate}>
                       {d.day}요일 {d.date}
                     </p>
-                    <p className={styles.tooltipLevelLabel} style={{ color }}>
+                    <p className={styles.tooltipLevelLabel}>
                       {getLevelLabel(d.level!)}
                     </p>
                   </div>
@@ -736,7 +757,7 @@ function WeekGrid({ days, isLoading }: { days: DayEntry[]; isLoading: boolean })
                       style={{ width: `${d.rate ?? 0}%`, background: color }}
                     />
                   </div>
-                  <span className={styles.tooltipRate} style={{ color }}>{d.rate}%</span>
+                  <span className={styles.tooltipRate}>{d.rate}%</span>
                 </div>
                 {hasFestival && (
                   <div className={styles.tooltipFestivals}>
