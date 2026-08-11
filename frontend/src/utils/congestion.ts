@@ -14,11 +14,11 @@ export function getLevelImage(level: CongestionLevel): string {
 
 export function getLevelColor(level: CongestionLevel): string {
   const colors: Record<CongestionLevel, string> = {
-    1: '#5bbfdf',
-    2: '#52c87c',
-    3: '#e8c844',
-    4: '#f08060',
-    5: '#e06868',
+    1: '#3b82d6',
+    2: '#2fae7a',
+    3: '#f0a92e',
+    4: '#ff8a4c',
+    5: '#ef4b3c',
   };
   return colors[level];
 }

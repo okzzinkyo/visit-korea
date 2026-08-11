@@ -24,11 +24,11 @@
   --shadow-hover: 0 14px 44px rgba(8, 139, 255, 0.18);
 
   /* Congestion colors */
-  --level-1: #5bbfdf;
-  --level-2: #52c87c;
-  --level-3: #e8c844;
-  --level-4: #f08060;
-  --level-5: #e06868;
+  --level-1: #3b82d6;
+  --level-2: #2fae7a;
+  --level-3: #f0a92e;
+  --level-4: #ff8a4c;
+  --level-5: #ef4b3c;
 
   /* Border radius */
   --radius-card: 16px;
