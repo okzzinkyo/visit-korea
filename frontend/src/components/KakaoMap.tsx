@@ -1,9 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCongestionLevel, getLevelColor, getLevelImage, getLevelLabel } from '../utils/congestion';
+import { getCongestionLevel, getLevelColor, getLevelLabel } from '../utils/congestion';
 import type { DistrictResponse } from '../types/api';
+import type { CongestionLevel } from '../types';
 import LoadingOverlay from './LoadingOverlay';
 import styles from './KakaoMap.module.css';
+import duck01 from '../assets/images/level01__duck.png';
+import duck02 from '../assets/images/level02__duck.png';
+import duck03 from '../assets/images/level03__duck.png';
+import duck04 from '../assets/images/level04__duck.png';
+import duck05 from '../assets/images/level05__duck.png';
+
+const DUCK_IMAGES: Record<CongestionLevel, string> = {
+  1: duck01, 2: duck02, 3: duck03, 4: duck04, 5: duck05,
+};
 
 interface DistrictFeature {
   type: string;
@@ -57,7 +67,7 @@ export default function KakaoMap({ districts }: Props) {
   const popupRef      = useRef<HTMLDivElement>(null);
   const popupNameRef  = useRef<HTMLDivElement>(null);
   const popupBadgeRef = useRef<HTMLSpanElement>(null);
-  const popupImgRef   = useRef<HTMLImageElement>(null);
+  const popupMeterFillRef = useRef<HTMLDivElement>(null);
   const popupRecommendRef     = useRef<HTMLDivElement>(null);
   const popupRecommendNameRef = useRef<HTMLParagraphElement>(null);
   const resetBtnRef   = useRef<HTMLButtonElement>(null);
@@ -198,25 +208,36 @@ export default function KakaoMap({ districts }: Props) {
             contentTimerRef.current = setTimeout(() => {
               const popup = popupRef.current;
               if (!popup) return;
-              // 진입 순간 커서 위치에 고정 — 이후 움직이지 않음
-              popup.style.left = `${mousePosRef.current.x + 20}px`;
-              popup.style.top  = `${mousePosRef.current.y - popup.offsetHeight / 2}px`;
               if (popupNameRef.current)  popupNameRef.current.textContent = name;
               if (popupBadgeRef.current) {
-                popupBadgeRef.current.textContent      = `${r}%`;
-                popupBadgeRef.current.style.color      = color;
-                popupBadgeRef.current.style.background = `${color}22`;
+                popupBadgeRef.current.textContent = `${r}%`;
+                popupBadgeRef.current.style.color = color;
+                popupBadgeRef.current.title       = getLevelLabel(lv);
               }
-              if (popupImgRef.current) {
-                popupImgRef.current.src = getLevelImage(lv);
-                popupImgRef.current.alt = getLevelLabel(lv);
+              if (popupMeterFillRef.current) {
+                popupMeterFillRef.current.style.width      = `${r}%`;
+                popupMeterFillRef.current.style.background = color;
               }
+              popup.style.setProperty('--popup-duck', `url(${DUCK_IMAGES[lv]})`);
               const rec = district?.recommendedPlace;
               recIdRef.current = rec?.id ?? null;
               if (popupRecommendNameRef.current) popupRecommendNameRef.current.textContent = rec?.name ?? '';
               if (popupRecommendRef.current) {
                 popupRecommendRef.current.style.backgroundImage = rec?.imageUrl ? `url(${rec.imageUrl})` : 'none';
               }
+
+              // 지도 영역 안쪽으로 위치 고정 — 가장자리(예: 기장군 상단)에서 팝업이 화면 밖으로 나가지 않도록 클램프
+              const mapRect = containerRef.current?.getBoundingClientRect();
+              const margin  = 12;
+              const minX = (mapRect?.left ?? 0) + margin;
+              const maxX = (mapRect?.right ?? window.innerWidth) - popup.offsetWidth - margin;
+              const minY = (mapRect?.top ?? 0) + margin;
+              const maxY = (mapRect?.bottom ?? window.innerHeight) - popup.offsetHeight - margin;
+              const left = Math.min(Math.max(mousePosRef.current.x + 20, minX), Math.max(minX, maxX));
+              const top  = Math.min(Math.max(mousePosRef.current.y - popup.offsetHeight / 2, minY), Math.max(minY, maxY));
+              popup.style.left = `${left}px`;
+              popup.style.top  = `${top}px`;
+
               popup.classList.add(styles.popupVisible);
             }, alreadyVisible ? 150 : 0);
           };
@@ -306,11 +327,12 @@ export default function KakaoMap({ districts }: Props) {
           popupRef.current?.classList.remove(styles.popupVisible);
         }}
       >
-        <div className={styles.popupName}  ref={popupNameRef} />
-        <div className={styles.popupLabel}>평균 혼잡도</div>
-        <div className={styles.popupCrowdRow}>
+        <div className={styles.popupName} ref={popupNameRef} />
+        <div className={styles.popupMeterRow}>
           <span className={styles.popupBadge} ref={popupBadgeRef} />
-          <img  className={styles.popupImg}   ref={popupImgRef} alt="" />
+          <div className={styles.popupMeterTrack}>
+            <div className={styles.popupMeterFill} ref={popupMeterFillRef} />
+          </div>
         </div>
         <div className={styles.popupDivider} />
         <div className={styles.popupRecommendLabel}>추천 여행지</div>
