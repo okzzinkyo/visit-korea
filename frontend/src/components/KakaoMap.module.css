@@ -67,12 +67,12 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: 90px;
-  height: 63px;
+  width: 80px;
+  height: 57px;
   background-image: var(--popup-duck, none);
   background-repeat: no-repeat;
-  background-position: right -14px top -14px;
-  background-size: 110px auto;
+  background-position: right -7px top -8px;
+  background-size: 90px auto;
   opacity: 0.65;
   pointer-events: none;
   z-index: -1;
