@@ -17,24 +17,32 @@ import {
   fetchPlaceForecast,
   fetchPlaceSuggestions,
 } from '../api/places';
-import type { CongestionPatternItemResponse, FestivalItemResponse, ForecastItemResponse } from '../types/api';
+import type { FestivalItemResponse, ForecastItemResponse } from '../types/api';
 import type { CongestionLevel } from '../types';
 import styles from './DetailPage.module.css';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 const WEEKENDS = new Set(['토', '일']);
 
-const LEVEL_LABELS_SHORT: Record<CongestionLevel, string> = {
-  0: '집계중', 1: '눈치성공', 2: '여유', 3: '보통', 4: '혼잡', 5: '눈치실패',
+// 요일별 혼잡 패턴 차트 전용 그라데이션 — 앱 전역 상태 색(getLevelColor)은 5단계가 서로 다른
+// 색상(파랑/초록/주황/빨강 등)이라 막대를 나란히 봤을 때 순서가 아니라 범주처럼 읽혀서,
+// 이 차트에서만 한산(파랑, 진함) → 보통(중립) → 혼잡(주황, 진함)의 단일 그라데이션을 쓴다.
+const PATTERN_BAR_COLORS: Record<CongestionLevel, string> = {
+  0: '#cbd5e0',
+  1: '#1565d8',
+  2: '#6aa8ec',
+  3: '#cbd5e0',
+  4: '#f3a35f',
+  5: '#e2531c',
 };
 
 const LEVEL_TIP: Record<CongestionLevel, string> = {
-  0: '아직 데이터를 모으고 있어요. 조금만 기다려주세요!',
-  1: '지금은 거의 대기 없어요. 편하게 다녀오세요!',
-  2: '가볍게 다녀오기 좋은 날이에요.',
-  3: '평소만큼 붐벼요. 무리 없는 수준!',
-  4: '조금 붐벼요. 이른 시간 방문을 추천해요.',
-  5: '많이 붐벼요. 대중교통 이용을 권해요!',
+  0: '이 관광지는 아직 예측 데이터가 없어요.',
+  1: '눈치게임 대성공의 날! 원하는 사진을 마음껏 남겨보세요 📸',
+  2: '눈치게임 성공! 발걸음 가볍게 출발하기 딱 좋은 날이에요 🌿',
+  3: '평소만큼 북적이는 날이에요. 슬기롭게 즐겨보세요 👀',
+  4: '눈치게임 주의보! 방문객이 많은 날이니 여유 있는 일정 계획을 권해요 ⚠️',
+  5: '눈치게임 비상! 인파가 몰리니 주변 대안 명소도 함께 살펴보세요 🚨',
 };
 
 function IconFestival({ className, size = 14 }: { className?: string; size?: number }) {
@@ -121,22 +129,6 @@ function rangesOverlap(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date): bool
 
 function festivalSearchUrl(name: string): string {
   return `https://search.naver.com/search.naver?query=${encodeURIComponent(name)}`;
-}
-
-// 백엔드가 요일 패턴 summary(혼잡/여유 요일 목록)를 내려주지 않아 레벨 기준으로 직접 계산
-function computeSummary(items: CongestionPatternItemResponse[]) {
-  return {
-    crowdedDays: items.filter(i => getCongestionLevel(i.averageCongestion.score) >= 4).map(i => i.dayLabel),
-    relaxedDays: items.filter(i => getCongestionLevel(i.averageCongestion.score) <= 2).map(i => i.dayLabel),
-  };
-}
-
-// 혼잡/여유 요일 중 더 적은(=평소와 다른, 눈에 띄는) 쪽을 강조 대상으로 고른다
-function resolveHighlightGroup(crowdedDays: string[], relaxedDays: string[]): 'crowded' | 'relaxed' | null {
-  if (crowdedDays.length === 0 && relaxedDays.length === 0) return null;
-  if (relaxedDays.length === 0) return 'crowded';
-  if (crowdedDays.length === 0) return 'relaxed';
-  return crowdedDays.length <= relaxedDays.length ? 'crowded' : 'relaxed';
 }
 
 function mapForecastItem(
@@ -266,7 +258,6 @@ export default function DetailPage() {
     queryKey: ['place-congestion-pattern', spotId],
     queryFn: () => fetchPlaceCongestionPattern(spotId!),
     enabled: !!spotId,
-    select: data => ({ ...data, summary: computeSummary(data.items) }),
   });
 
   // 혼잡/매우혼잡(레벨 4 이상)일 때만 대체 스팟 추천을 조회
@@ -349,10 +340,6 @@ export default function DetailPage() {
 
   const level = getCongestionLevel(spot.todayCongestion.score);
   const showImg = !!spot.imageUrl && !imgError;
-
-  const highlightGroup = pattern
-    ? resolveHighlightGroup(pattern.summary.crowdedDays, pattern.summary.relaxedDays)
-    : null;
 
   return (
     <div className={styles.page}>
@@ -455,7 +442,7 @@ export default function DetailPage() {
             {isForecastError || hasNoForecastData ? (
               <div className={styles.forecastError}>
                 <p className={styles.forecastErrorText}>
-                  {isForecastError ? '예측 혼잡도를 불러오지 못했어요.' : '이 관광지는 아직 예측 데이터가 없어요.'}
+                  {isForecastError ? '예측 혼잡도를 불러오지 못했어요.' : LEVEL_TIP[0]}
                 </p>
                 {isForecastError && (
                   <button className={styles.forecastErrorRetry} onClick={() => refetchForecast()}>
@@ -530,10 +517,6 @@ export default function DetailPage() {
                 <div className={styles.vchartBars}>
                   {pattern.items.map(item => {
                     const lv = getCongestionLevel(item.averageCongestion.score);
-                    const isCrowded = highlightGroup === 'crowded' && pattern.summary.crowdedDays.includes(item.dayLabel);
-                    const isRelaxed = highlightGroup === 'relaxed' && pattern.summary.relaxedDays.includes(item.dayLabel);
-                    const bg = isCrowded ? 'var(--color-secondary)' : 'var(--color-primary)';
-                    const opacity = isCrowded || isRelaxed ? 1 : 0.25 + (lv - 1) * 0.15;
                     return (
                       <div key={item.dayOfWeek} className={styles.vchartCol}>
                         <span
@@ -544,7 +527,7 @@ export default function DetailPage() {
                         </span>
                         <div
                           className={styles.vchartBar}
-                          style={{ height: `${item.averageCongestion.score}%`, background: bg, opacity }}
+                          style={{ height: `${item.averageCongestion.score}%`, background: PATTERN_BAR_COLORS[lv] }}
                         />
                       </div>
                     );
@@ -552,18 +535,10 @@ export default function DetailPage() {
                 </div>
                 <div className={styles.vchartLabels}>
                   {pattern.items.map(item => {
-                    const lv = getCongestionLevel(item.averageCongestion.score);
-                    const isCrowded = highlightGroup === 'crowded' && pattern.summary.crowdedDays.includes(item.dayLabel);
                     const isWeekend = WEEKENDS.has(item.dayLabel);
                     return (
                       <div key={item.dayOfWeek} className={styles.vchartLabel}>
                         <span className={`${styles.vchartLabelDay} ${isWeekend ? styles.vchartLabelDayWeekend : ''}`}>{item.dayLabel}</span>
-                        <span
-                          className={styles.vchartLabelLv}
-                          style={{ color: isCrowded ? 'var(--color-secondary)' : 'var(--color-sub)' }}
-                        >
-                          {LEVEL_LABELS_SHORT[lv]}
-                        </span>
                       </div>
                     );
                   })}
