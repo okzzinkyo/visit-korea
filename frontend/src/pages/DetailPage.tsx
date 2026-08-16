@@ -25,10 +25,11 @@ const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 const WEEKENDS = new Set(['토', '일']);
 
 const LEVEL_LABELS_SHORT: Record<CongestionLevel, string> = {
-  1: '눈치성공', 2: '여유', 3: '보통', 4: '혼잡', 5: '눈치실패',
+  0: '집계중', 1: '눈치성공', 2: '여유', 3: '보통', 4: '혼잡', 5: '눈치실패',
 };
 
 const LEVEL_TIP: Record<CongestionLevel, string> = {
+  0: '아직 데이터를 모으고 있어요. 조금만 기다려주세요!',
   1: '지금은 거의 대기 없어요. 편하게 다녀오세요!',
   2: '가볍게 다녀오기 좋은 날이에요.',
   3: '평소만큼 붐벼요. 무리 없는 수준!',
@@ -390,9 +391,11 @@ export default function DetailPage() {
                   alt={getLevelLabel(level)}
                   className={styles.levelStampImg}
                 />
-                <span className={styles.levelStampScore} style={{ color: getLevelColor(level) }}>
-                  {spot.todayCongestion.score}%
-                </span>
+                {level > 0 && (
+                  <span className={styles.levelStampScore} style={{ color: getLevelColor(level) }}>
+                    {spot.todayCongestion.score}%
+                  </span>
+                )}
               </div>
             </div>
 

@@ -5,6 +5,7 @@ import type { DistrictResponse } from '../types/api';
 import type { CongestionLevel } from '../types';
 import LoadingOverlay from './LoadingOverlay';
 import styles from './KakaoMap.module.css';
+import duck00 from '../assets/images/level00__duck.png';
 import duck01 from '../assets/images/level01__duck.png';
 import duck02 from '../assets/images/level02__duck.png';
 import duck03 from '../assets/images/level03__duck.png';
@@ -12,7 +13,7 @@ import duck04 from '../assets/images/level04__duck.png';
 import duck05 from '../assets/images/level05__duck.png';
 
 const DUCK_IMAGES: Record<CongestionLevel, string> = {
-  1: duck01, 2: duck02, 3: duck03, 4: duck04, 5: duck05,
+  0: duck00, 1: duck01, 2: duck02, 3: duck03, 4: duck04, 5: duck05,
 };
 
 interface DistrictFeature {

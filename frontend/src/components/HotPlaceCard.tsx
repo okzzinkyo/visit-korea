@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCongestionLevel, getLevelColor } from '../utils/congestion';
+import { getCongestionLevel, getLevelColor, getLevelImage, getLevelLabel } from '../utils/congestion';
 import { getSpotGradient } from '../utils/spotGradient';
 import IconPin from './IconPin';
 import type { BattlePlaceResponse } from '../types/api';
@@ -36,9 +36,11 @@ export default function HotPlaceCard({ place }: Props) {
             {place.rank}위
           </span>
         )}
-        <span className={styles.congestionPill} style={{ background: levelColor }}>
-          {place.congestion.score}%
-        </span>
+        <img
+          src={getLevelImage(level)}
+          alt={getLevelLabel(level)}
+          className={styles.levelStampImg}
+        />
       </div>
       <div className={styles.body}>
         <div>

@@ -1,4 +1,4 @@
-export type CongestionLevel = 1 | 2 | 3 | 4 | 5;
+export type CongestionLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface District {
   id: string;

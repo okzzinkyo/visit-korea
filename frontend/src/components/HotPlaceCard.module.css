@@ -45,16 +45,22 @@
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.28));
 }
 
-.congestionPill {
+/* 혼잡도 스탬프 — 사진 모서리에 찍힌 것처럼 살짝 기울여 배치 (히어로 스탬프와 동일한 톤) */
+.levelStampImg {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
+  bottom: 6px;
+  right: 8px;
   z-index: 2;
-  padding: 3px 9px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 800;
-  color: #fff;
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  transform: rotate(-6deg);
+  filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.3));
+  transition: transform 0.22s;
+}
+
+.card:hover .levelStampImg {
+  transform: rotate(-6deg) scale(1.08);
 }
 
 .body {
