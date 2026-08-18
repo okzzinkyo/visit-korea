@@ -76,13 +76,23 @@
   object-fit: cover;
 }
 
+/* 2-stop 선형 그라데이션은 기울기가 시작점에서 뚝 끊겨 눈에 각지게 보임 — 위로 갈수록 기울기가
+   0으로 수렴하는 이차curve(ease-out)로 다단계 stop을 넣어 자연스럽게 사라지게 함 */
 .spotImageOverlay {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   height: 50%;
-  background: linear-gradient(to top, rgba(2, 21, 55, 0.45) 0%, transparent 100%);
+  background: linear-gradient(
+    to top,
+    rgba(2, 21, 55, 0.45) 0%,
+    rgba(2, 21, 55, 0.29) 20%,
+    rgba(2, 21, 55, 0.16) 40%,
+    rgba(2, 21, 55, 0.07) 60%,
+    rgba(2, 21, 55, 0.02) 80%,
+    transparent 100%
+  );
 }
 
 /* 오늘의 눈치게임 결과 스탬프 — 사진 모서리에 겹쳐 놓아 서비스 아이덴티티를 히어로에서 드러냄 */

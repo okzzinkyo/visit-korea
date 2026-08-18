@@ -39,13 +39,23 @@
   background: rgba(0, 0, 0, 0.2);
 }
 
+/* 2-stop 선형 그라데이션은 값은 이어져도 기울기가 시작점에서 뚝 끊겨(0 → 일정값) 눈에 각지게 보임 —
+   위로 갈수록 기울기 자체가 0으로 수렴하는 이차curve(ease-out)로 다단계 stop을 넣어 자연스럽게 사라지게 함 */
 .imgScrim {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   height: 60px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.58) 0%, transparent 100%);
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.58) 0%,
+    rgba(0, 0, 0, 0.37) 20%,
+    rgba(0, 0, 0, 0.21) 40%,
+    rgba(0, 0, 0, 0.09) 60%,
+    rgba(0, 0, 0, 0.02) 80%,
+    transparent 100%
+  );
   pointer-events: none;
 }
 
@@ -142,6 +152,37 @@
   flex-shrink: 0;
   width: 38px;
   text-align: right;
+}
+
+/* 옆 카드가 혼잡도 바로 늘어나면 grid stretch로 이 카드도 같이 늘어나 하단이 허전해 보임 —
+   지도 hover 팝업(KakaoMap)과 동일한 레벨별 오리 워터마크를 재사용해 남는 공간을 채움 */
+.pendingRow {
+  position: relative;
+  flex: 1;
+  min-height: 26px;
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+
+/* 컨테이너(flex:1)는 카드마다 높이가 달라져도, 오리는 항상 같은 크기로 우하단에 고정 —
+   .levelImg와 동일하게 배경 이미지 대신 절대 위치 <img>로 크기를 컨테이너 높이와 분리함 */
+.pendingDuck {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.pendingLabel {
+  position: relative;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-sub);
 }
 
 .footer {

@@ -20,7 +20,7 @@ export function getLevelColor(level: CongestionLevel): string {
     0: '#9aa5b1',
     1: '#3b82d6',
     2: '#2fae7a',
-    3: '#f0a92e',
+    3: '#f0c32e',
     4: '#ff8a4c',
     5: '#ef4b3c',
   };

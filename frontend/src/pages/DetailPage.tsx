@@ -6,8 +6,8 @@ import DateRangePicker from '../components/DateRangePicker';
 import LoadingOverlay from '../components/LoadingOverlay';
 import IconPin from '../components/IconPin';
 import { getCongestionLevel, getLevelColor, getLevelImage, getLevelLabel } from '../utils/congestion';
-import { getSpotGradient } from '../utils/spotGradient';
 import { josaIGa } from '../utils/josa';
+import defaultCardImg from '../assets/images/default_card.png';
 import {
   countPlaceView,
   fetchPlaceCompanions,
@@ -360,14 +360,21 @@ export default function DetailPage() {
             <div className={styles.spotImageWrap}>
               <div
                 className={styles.spotImage}
-                style={showImg ? undefined : { background: getSpotGradient(String(spot.id)) }}
+                style={showImg ? undefined : { background: '#f5f2e9' }}
               >
-                {showImg && (
+                {showImg ? (
                   <img
                     src={spot.imageUrl}
                     alt={spot.name}
                     className={styles.spotImagePhoto}
                     onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <img
+                    src={defaultCardImg}
+                    alt={spot.name}
+                    className={styles.spotImagePhoto}
+                    style={{ objectFit: 'contain' }}
                   />
                 )}
                 <div className={styles.spotImageOverlay} />
@@ -634,14 +641,21 @@ function RecCard({ spot, navigate }: {
       <div className={styles.recCardImgWrap}>
         <div
           className={styles.recCardBg}
-          style={showImg ? undefined : { background: getSpotGradient(String(spot.id)) }}
+          style={showImg ? undefined : { background: '#f5f2e9' }}
         >
-          {showImg && (
+          {showImg ? (
             <img
               src={spot.imageUrl}
               alt={spot.name}
               className={styles.recCardPhoto}
               onError={() => setImgError(true)}
+            />
+          ) : (
+            <img
+              src={defaultCardImg}
+              alt={spot.name}
+              className={styles.recCardPhoto}
+              style={{ objectFit: 'contain' }}
             />
           )}
         </div>

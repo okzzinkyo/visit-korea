@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCongestionLevel, getLevelColor } from '../utils/congestion';
-import { getSpotGradient } from '../utils/spotGradient';
 import IconPin from './IconPin';
 import type { HiddenPlaceItemResponse } from '../types/api';
 import styles from './HiddenPlaceCard.module.css';
+import defaultCardImg from '../assets/images/default_card.png';
 
 interface Props {
   place: HiddenPlaceItemResponse;
@@ -19,9 +19,11 @@ export default function HiddenPlaceCard({ place }: Props) {
 
   return (
     <article className={styles.card} onClick={goDetail} style={{ '--card-accent': levelColor } as React.CSSProperties}>
-      <div className={styles.img} style={showImg ? undefined : { background: getSpotGradient(String(place.id)) }}>
-        {showImg && (
+      <div className={styles.img} style={showImg ? undefined : { background: '#f5f2e9' }}>
+        {showImg ? (
           <img src={place.imageUrl} alt={place.name} className={styles.imgPhoto} onError={() => setImgError(true)} />
+        ) : (
+          <img src={defaultCardImg} alt={place.name} className={styles.imgPhoto} style={{ objectFit: 'contain' }} />
         )}
         <span className={styles.hiddenTag}>숨은명소</span>
       </div>

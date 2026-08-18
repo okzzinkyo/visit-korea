@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCongestionLevel, getLevelColor, getLevelImage, getLevelLabel } from '../utils/congestion';
-import { getSpotGradient } from '../utils/spotGradient';
 import IconPin from './IconPin';
 import type { BattlePlaceResponse } from '../types/api';
 import styles from './HotPlaceCard.module.css';
+import defaultCardImg from '../assets/images/default_card.png';
 
 const RANK_BG: Record<number, string> = {
   1: 'var(--color-secondary)',
@@ -27,9 +27,11 @@ export default function HotPlaceCard({ place }: Props) {
 
   return (
     <article className={styles.card} onClick={goDetail} style={{ '--card-accent': levelColor } as React.CSSProperties}>
-      <div className={styles.img} style={showImg ? undefined : { background: getSpotGradient(String(place.id)) }}>
-        {showImg && (
+      <div className={styles.img} style={showImg ? undefined : { background: '#f5f2e9' }}>
+        {showImg ? (
           <img src={place.imageUrl} alt={place.name} className={styles.imgPhoto} onError={() => setImgError(true)} />
+        ) : (
+          <img src={defaultCardImg} alt={place.name} className={styles.imgPhoto} style={{ objectFit: 'contain' }} />
         )}
         {rankBg && (
           <span className={styles.rankBadge} style={{ background: rankBg }}>

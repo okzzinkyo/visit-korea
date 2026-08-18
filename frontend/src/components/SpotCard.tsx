@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCongestionLevel, getLevelColor, getLevelLabel, getLevelImage } from '../utils/congestion';
-import { getSpotGradient } from '../utils/spotGradient';
 import type { PlaceCardResponse } from '../types/api';
 import styles from './SpotCard.module.css';
+import defaultCardImg from '../assets/images/default_card.png';
+import duck00 from '../assets/images/level00__duck.png';
 
 export default function SpotCard({ place }: { place: PlaceCardResponse }) {
   const navigate = useNavigate();
@@ -19,9 +20,11 @@ export default function SpotCard({ place }: { place: PlaceCardResponse }) {
 
   return (
     <article className={styles.card} onClick={goDetail} style={{ '--card-accent': color } as React.CSSProperties}>
-      <div className={styles.img} style={showImg ? undefined : { background: getSpotGradient(String(place.id)) }}>
-        {showImg && (
+      <div className={styles.img} style={showImg ? undefined : { background: '#f5f2e9' }}>
+        {showImg ? (
           <img src={place.imageUrl} alt={place.name} className={styles.imgPhoto} onError={() => setImgError(true)} />
+        ) : (
+          <img src={defaultCardImg} alt={place.name} className={styles.imgPhoto} style={{ objectFit: 'contain' }} />
         )}
         <div className={styles.imgOverlay} />
         <div className={styles.imgScrim} />
@@ -38,7 +41,7 @@ export default function SpotCard({ place }: { place: PlaceCardResponse }) {
           <span className={styles.districtDot} style={{ background: color }} />
           {place.districtName}
         </p>
-        {hasCongestion && (
+        {hasCongestion ? (
           <>
             <span className={styles.avgLabel}>오늘의 인기</span>
             <div className={styles.barRow}>
@@ -48,6 +51,11 @@ export default function SpotCard({ place }: { place: PlaceCardResponse }) {
               <span className={styles.rate} style={{ color }}>{rate}%</span>
             </div>
           </>
+        ) : (
+          <div className={styles.pendingRow}>
+            <span className={styles.pendingLabel}>혼잡도 집계중</span>
+            <img src={duck00} alt="" className={styles.pendingDuck} />
+          </div>
         )}
         <div className={styles.footer}>
           <span className={styles.views}>{place.last7DaysDetailViewCount.toLocaleString()}명이 눈치 보는 중!</span>
