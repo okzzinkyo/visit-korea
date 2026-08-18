@@ -49,8 +49,8 @@ function IconFestival({ className, size = 14 }: { className?: string; size?: num
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 21V4" />
-      <path d="M4 4h13l-2.5 4L17 12H4" />
+      <path d="M8 3v18" />
+      <path d="M8 4h12l-3 4 3 4H8Z" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -792,7 +792,11 @@ function WeekGrid({ days, isLoading, recommendedDate, highlightedFestivalId, onH
                   className={styles.dayLevelImg}
                 />
               )}
-              {hasFestival && <span className={styles.dayFestivalFlag}>⚑</span>}
+              {hasFestival && (
+                <span className={styles.dayFestivalFlag}>
+                  <IconFestival size={11} />
+                </span>
+              )}
             </span>
             {!isEmpty && <span className={styles.dayRate}>{d.rate}%</span>}
 

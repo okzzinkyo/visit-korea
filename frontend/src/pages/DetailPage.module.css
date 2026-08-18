@@ -278,8 +278,8 @@
 }
 
 /* 축제 있는 날 — 스탬프 이미지의 배지로 앵커(.dayImageWrap 기준), 위 텍스트 줄 높이와 무관하게 항상 이미지 모서리에 붙음.
-   맨 글자(⚑)만 얹었더니 일러스트 위에서 대비가 안 나와 안 보였음 → Claude Design 3d처럼 흰 테두리 있는
-   원형 배지로 교체(배경이 무엇이든 항상 또렷). 위치도 우상단(날짜 텍스트와 겹침) 대신 우하단으로 */
+   맨 글자(⚑)만 얹었더니 일러스트 위에서 대비가 안 나와 안 보였음 → 그림자 있는 원형 배지로 교체
+   (배경이 무엇이든 항상 또렷). 위치도 우상단(날짜 텍스트와 겹침) 대신 우하단으로 */
 .dayImageWrap {
   position: relative;
   display: flex;
@@ -298,13 +298,9 @@
   justify-content: center;
   border-radius: 50%;
   background: var(--color-secondary);
-  border: 2px solid var(--bg-card);
   color: #fff;
-  font-size: 8px;
-  font-weight: 800;
-  line-height: 1;
   pointer-events: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 5px rgba(20, 25, 40, 0.2);
 }
 
 /* 14일 중 가장 한가한 날 — 셀 높이엔 관여하지 않고 헤더 아래 여백 위로 살짝 띄워 표시 */
@@ -1153,7 +1149,6 @@
   .dayFestivalFlag {
     width: 15px;
     height: 15px;
-    font-size: 7px;
     right: -2px;
     bottom: -2px;
   }
