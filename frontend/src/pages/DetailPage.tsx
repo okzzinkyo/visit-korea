@@ -29,11 +29,11 @@ const WEEKENDS = new Set(['토', '일']);
 // 이 차트에서만 한산(파랑, 진함) → 보통(중립) → 혼잡(주황, 진함)의 단일 그라데이션을 쓴다.
 const PATTERN_BAR_COLORS: Record<CongestionLevel, string> = {
   0: '#cbd5e0',
-  1: '#1565d8',
-  2: '#6aa8ec',
-  3: '#cbd5e0',
-  4: '#f3a35f',
-  5: '#e2531c',
+  1: 'var(--color-primary-dark)',
+  2: 'color-mix(in srgb, var(--color-primary-dark) 65%, transparent)',
+  3: 'color-mix(in srgb, var(--color-primary-dark) 35%, transparent)',
+  4: 'color-mix(in srgb, var(--color-secondary) 65%, transparent)',
+  5: 'var(--color-secondary)',
 };
 
 const LEVEL_TIP: Record<CongestionLevel, string> = {
