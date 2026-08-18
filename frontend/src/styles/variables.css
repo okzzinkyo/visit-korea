@@ -23,12 +23,10 @@
   --shadow-md: 0 6px 28px rgba(2, 117, 243, 0.11);
   --shadow-hover: 0 14px 44px rgba(8, 139, 255, 0.18);
 
-  /* Congestion colors */
-  --level-1: #3b82d6;
-  --level-2: #2fae7a;
-  --level-3: #f0a92e;
-  --level-4: #ff8a4c;
-  --level-5: #ef4b3c;
+  /* Accent colors (general-purpose, not congestion levels — those come from getLevelColor() in utils/congestion.ts) */
+  --color-accent-blue: #3b82d6;
+  --color-accent-green: #2fae7a;
+  --color-accent-red: #ef4b3c;
 
   /* Border radius */
   --radius-card: 16px;

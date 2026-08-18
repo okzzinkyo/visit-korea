@@ -309,7 +309,7 @@
   top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--level-1);
+  background: var(--color-accent-blue);
   color: #fff;
   font-size: 10px;
   font-weight: 800;
@@ -362,13 +362,13 @@
   line-height: 1.2;
 }
 
-/* Claude Design과 동일하게 토요일/일요일을 다른 색으로 구분(둘 다 같은 빨강이 아니라) — 기존 레벨 팔레트 재사용 */
+/* Claude Design과 동일하게 토요일/일요일을 다른 색으로 구분(둘 다 같은 빨강이 아니라) */
 .dayLabelSaturday {
-  color: var(--level-1);
+  color: var(--color-accent-blue);
 }
 
 .dayLabelSunday {
-  color: var(--level-5);
+  color: var(--color-accent-red);
 }
 
 .dayDate {
@@ -521,7 +521,7 @@
   padding: 5px 12px;
   border-radius: 20px;
   background: rgba(82, 200, 124, 0.14);
-  color: var(--level-2);
+  color: var(--color-accent-green);
 }
 
 .chipCalm::before {
@@ -529,7 +529,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--level-2);
+  background: var(--color-accent-green);
   flex-shrink: 0;
 }
 
