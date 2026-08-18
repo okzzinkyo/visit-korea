@@ -53,7 +53,7 @@ export default function SpotCard({ place }: { place: PlaceCardResponse }) {
           </>
         ) : (
           <div className={styles.pendingRow}>
-            <span className={styles.pendingLabel}>혼잡도 집계중</span>
+            <span className={styles.pendingLabel}>혼잡도 미제공</span>
             <img src={duck00} alt="" className={styles.pendingDuck} />
           </div>
         )}
