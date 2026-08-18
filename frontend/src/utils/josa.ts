@@ -11,7 +11,3 @@ function hasBatchim(word: string): boolean {
 export function josaIGa(word: string): string {
   return hasBatchim(word) ? '이' : '가';
 }
-
-export function josaEunNeun(word: string): string {
-  return hasBatchim(word) ? '은' : '는';
-}
