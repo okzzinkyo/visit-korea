@@ -1,4 +1,5 @@
 import styles from './Header.module.css';
+import logo from '../assets/images/logo.svg';
 
 export default function Header() {
   const today = new Date().toLocaleDateString('ko-KR', {
@@ -12,7 +13,7 @@ export default function Header() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <a href="/" className={styles.logo}>
-          <img src="/images/logo.svg" alt="부산 눈치게임" className={styles.logoImg} />
+          <img src={logo} alt="부산 눈치게임" className={styles.logoImg} />
         </a>
         <div className={styles.today}>
           <span className={styles.liveDot} />

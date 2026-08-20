@@ -1,4 +1,10 @@
 import type { CongestionLevel } from '../types';
+import level00 from '../assets/images/level00.png';
+import level01 from '../assets/images/level01.png';
+import level02 from '../assets/images/level02.png';
+import level03 from '../assets/images/level03.png';
+import level04 from '../assets/images/level04.png';
+import level05 from '../assets/images/level05.png';
 
 // ponytail: 백엔드가 아직 "데이터 없음"을 null 대신 0으로 내려주고 있어 0을 집계중으로 취급한다.
 // 백엔드가 null을 내려주도록 고쳐지면 `rate === 0` 분기는 지우고 null 체크만 남길 것.
@@ -11,8 +17,17 @@ export function getCongestionLevel(rate: number | null): CongestionLevel {
   return 5;
 }
 
+const LEVEL_IMAGES: Record<CongestionLevel, string> = {
+  0: level00,
+  1: level01,
+  2: level02,
+  3: level03,
+  4: level04,
+  5: level05,
+};
+
 export function getLevelImage(level: CongestionLevel): string {
-  return `/images/level0${level}.png`;
+  return LEVEL_IMAGES[level];
 }
 
 export function getLevelColor(level: CongestionLevel): string {
