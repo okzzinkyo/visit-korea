@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCongestionLevel, getLevelColor } from '../utils/congestion';
+import { getCongestionLevel, getLevelColor, roundRate } from '../utils/congestion';
 import IconPin from './IconPin';
 import type { HiddenPlaceItemResponse } from '../types/api';
 import styles from './HiddenPlaceCard.module.css';
@@ -14,7 +14,8 @@ export default function HiddenPlaceCard({ place }: Props) {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
   const showImg = !!place.imageUrl && !imgError;
-  const levelColor = getLevelColor(getCongestionLevel(place.averageCongestion.score));
+  const score = roundRate(place.averageCongestion.score);
+  const levelColor = getLevelColor(getCongestionLevel(score));
   const goDetail = () => navigate(`/detail/${place.id}`);
 
   return (
@@ -38,7 +39,7 @@ export default function HiddenPlaceCard({ place }: Props) {
             <span className={styles.descLine}>
               향후 30일 평균 예측 혼잡도{' '}
               <strong className={styles.descScore} style={{ color: levelColor }}>
-                {place.averageCongestion.score}%
+                {score !== null ? `${score}%` : '집계중'}
               </strong>
             </span>
             <span className={styles.descLine}>여유롭게 즐기기 딱 좋은 시기입니다.</span>

@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import DateRangePicker from '../components/DateRangePicker';
 import LoadingOverlay from '../components/LoadingOverlay';
 import IconPin from '../components/IconPin';
-import { getCongestionLevel, getLevelColor, getLevelImage, getLevelLabel } from '../utils/congestion';
+import { getCongestionLevel, getLevelColor, getLevelImage, getLevelLabel, roundRate } from '../utils/congestion';
 import { josaIGa } from '../utils/josa';
 import defaultCardImg from '../assets/images/default_card.png';
 import {
@@ -136,11 +136,12 @@ function mapForecastItem(
   todayISO: string,
   festivalsById: Map<number, FestivalItemResponse>,
 ): DayEntry {
+  const rate = roundRate(item.congestion.score);
   return {
     day: weekdayOf(item.date),
     date: item.monthDay,
-    level: getCongestionLevel(item.congestion.score),
-    rate: item.congestion.score,
+    level: getCongestionLevel(rate),
+    rate,
     isToday: item.date === todayISO,
     festivals: item.festivalIds
       .map(id => festivalsById.get(id))
@@ -338,7 +339,8 @@ export default function DetailPage() {
     );
   }
 
-  const level = getCongestionLevel(spot.todayCongestion.score);
+  const todayScore = roundRate(spot.todayCongestion.score);
+  const level = getCongestionLevel(todayScore);
   const showImg = !!spot.imageUrl && !imgError;
 
   return (
@@ -387,7 +389,7 @@ export default function DetailPage() {
                 />
                 {level > 0 && (
                   <span className={styles.levelStampScore} style={{ color: getLevelColor(level) }}>
-                    {spot.todayCongestion.score}%
+                    {todayScore}%
                   </span>
                 )}
               </div>
@@ -523,18 +525,20 @@ export default function DetailPage() {
                 </div>
                 <div className={styles.vchartBars}>
                   {pattern.items.map(item => {
-                    const lv = getCongestionLevel(item.averageCongestion.score);
+                    const score = roundRate(item.averageCongestion.score);
+                    const lv = getCongestionLevel(score);
+                    const barHeight = score ?? 0;
                     return (
                       <div key={item.dayOfWeek} className={styles.vchartCol}>
                         <span
                           className={styles.vchartBarScore}
-                          style={{ bottom: `calc(${item.averageCongestion.score}% + 4px)` }}
+                          style={{ bottom: `calc(${barHeight}% + 4px)` }}
                         >
-                          {item.averageCongestion.score}%
+                          {score !== null ? `${score}%` : '집계중'}
                         </span>
                         <div
                           className={styles.vchartBar}
-                          style={{ height: `${item.averageCongestion.score}%`, background: PATTERN_BAR_COLORS[lv] }}
+                          style={{ height: `${barHeight}%`, background: PATTERN_BAR_COLORS[lv] }}
                         />
                       </div>
                     );
@@ -722,7 +726,7 @@ function WeekGrid({ days, isLoading, recommendedDate, highlightedFestivalId, onH
             {d.day}요일 {d.date}
           </p>
           <p className={styles.tooltipLevelLabel} style={{ color }}>
-            {getLevelLabel(d.level!)} · {d.rate}%
+            {getLevelLabel(d.level!)}{d.rate !== null ? ` · ${d.rate}%` : ''}
           </p>
         </div>
       </div>
@@ -812,7 +816,7 @@ function WeekGrid({ days, isLoading, recommendedDate, highlightedFestivalId, onH
                 </span>
               )}
             </span>
-            {!isEmpty && <span className={styles.dayRate}>{d.rate}%</span>}
+            {!isEmpty && d.rate !== null && <span className={styles.dayRate}>{d.rate}%</span>}
 
             {isActive && !isEmpty && (
               <div className={`${styles.tooltip} ${tooltipAlign}`}>

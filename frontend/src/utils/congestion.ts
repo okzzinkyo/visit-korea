@@ -6,10 +6,13 @@ import level03 from '../assets/images/level03.png';
 import level04 from '../assets/images/level04.png';
 import level05 from '../assets/images/level05.png';
 
-// ponytail: 백엔드가 아직 "데이터 없음"을 null 대신 0으로 내려주고 있어 0을 집계중으로 취급한다.
-// 백엔드가 null을 내려주도록 고쳐지면 `rate === 0` 분기는 지우고 null 체크만 남길 것.
+export function roundRate(score: number | null): number | null {
+  return score === null ? null : Math.round(score);
+}
+
+// 예측치는 정확히 0일 수 없으므로(항상 0.x 소수), 집계중 여부는 null로만 판단한다.
 export function getCongestionLevel(rate: number | null): CongestionLevel {
-  if (rate === null || rate === 0) return 0;
+  if (rate === null) return 0;
   if (rate <= 20) return 1;
   if (rate <= 40) return 2;
   if (rate <= 60) return 3;

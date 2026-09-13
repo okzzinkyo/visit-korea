@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCongestionLevel, getLevelColor, getLevelLabel, getLevelImage } from '../utils/congestion';
+import { getCongestionLevel, getLevelColor, getLevelLabel, getLevelImage, roundRate } from '../utils/congestion';
 import type { PlaceCardResponse } from '../types/api';
 import styles from './SpotCard.module.css';
 import defaultCardImg from '../assets/images/default_card.png';
@@ -9,9 +9,9 @@ import duck00 from '../assets/images/level00__duck.png';
 export default function SpotCard({ place }: { place: PlaceCardResponse }) {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
-  const rate  = place.last7DaysAverageCongestion.score;
-  const hasCongestion = rate > 0;
+  const rate  = roundRate(place.todayCongestion.score);
   const level = getCongestionLevel(rate);
+  const hasCongestion = level > 0;
   const color = getLevelColor(level);
   const label = getLevelLabel(level);
   const showImg = !!place.imageUrl && !imgError;

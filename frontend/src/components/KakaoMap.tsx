@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCongestionLevel, getLevelColor, getLevelLabel } from '../utils/congestion';
+import { getCongestionLevel, getLevelColor, getLevelLabel, roundRate } from '../utils/congestion';
 import type { DistrictResponse } from '../types/api';
 import type { CongestionLevel } from '../types';
 import LoadingOverlay from './LoadingOverlay';
@@ -104,7 +104,7 @@ export default function KakaoMap({ districts }: Props) {
     }
 
     polygonsRef.current.forEach((polygon, code) => {
-      const rate  = districtsRef.current.get(code)?.congestion.score ?? 0;
+      const rate  = districtsRef.current.get(code)?.congestion.score ?? null;
       const color = getLevelColor(getCongestionLevel(rate));
       baseColorRef.current.set(code, color);
       polygon.setOptions({ fillColor: color });
@@ -175,7 +175,7 @@ export default function KakaoMap({ districts }: Props) {
           const centroid = computeCentroid(feature.geometry);
           bounds.extend(new kakao.maps.LatLng(centroid.lat, centroid.lng));
 
-          const rate      = districtsRef.current.get(code)?.congestion.score ?? 0;
+          const rate      = districtsRef.current.get(code)?.congestion.score ?? null;
           const level     = getCongestionLevel(rate);
           const fillColor = getLevelColor(level);
           baseColorRef.current.set(code, fillColor);
@@ -196,7 +196,7 @@ export default function KakaoMap({ districts }: Props) {
             if (hideTimerRef.current) { clearTimeout(hideTimerRef.current); hideTimerRef.current = null; }
 
             const district = districtsRef.current.get(code);
-            const r     = district?.congestion.score ?? 0;
+            const r     = roundRate(district?.congestion.score ?? null);
             const lv    = getCongestionLevel(r);
             const color = getLevelColor(lv);
 
@@ -211,12 +211,12 @@ export default function KakaoMap({ districts }: Props) {
               if (!popup) return;
               if (popupNameRef.current)  popupNameRef.current.textContent = name;
               if (popupBadgeRef.current) {
-                popupBadgeRef.current.textContent = `${r}%`;
+                popupBadgeRef.current.textContent = r !== null ? `${r}%` : '집계중';
                 popupBadgeRef.current.style.color = color;
                 popupBadgeRef.current.title       = getLevelLabel(lv);
               }
               if (popupMeterFillRef.current) {
-                popupMeterFillRef.current.style.width      = `${r}%`;
+                popupMeterFillRef.current.style.width      = `${r ?? 0}%`;
                 popupMeterFillRef.current.style.background = color;
               }
               popup.style.setProperty('--popup-duck', `url(${DUCK_IMAGES[lv]})`);

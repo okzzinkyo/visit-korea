@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getCongestionLevel, getLevelColor, getLevelLabel, getLevelImage } from '../utils/congestion';
+import { getCongestionLevel, getLevelColor, getLevelLabel, getLevelImage, roundRate } from '../utils/congestion';
 import type { DistrictCongestionResponse } from '../types/api';
 import styles from './CongestionBanner.module.css';
 
@@ -13,10 +13,13 @@ interface Props {
 export default function CongestionBanner({ districtName, congestionScore, top3, onSelectDistrict }: Props) {
   const [popupDismissed, setPopupDismissed] = useState(false);
 
-  const level = getCongestionLevel(congestionScore);
+  const score = roundRate(congestionScore);
+  const level = getCongestionLevel(score);
   const color = getLevelColor(level);
   const label = getLevelLabel(level);
-  const sortedTop3 = [...top3].sort((a, b) => a.congestionScore - b.congestionScore);
+  const sortedTop3 = [...top3]
+    .sort((a, b) => a.congestionScore - b.congestionScore)
+    .map(d => ({ ...d, congestionScore: roundRate(d.congestionScore) }));
 
   return (
     <>
@@ -26,7 +29,7 @@ export default function CongestionBanner({ districtName, congestionScore, top3, 
           <img src={getLevelImage(level)} alt={label} className={styles.bannerLevelImg} />
           <div className={styles.bannerInfo}>
             <span className={styles.bannerHeadline}>{districtName}, 지금 붐빕니다!</span>
-            <span className={styles.bannerScore} style={{ color }}>혼잡도 {congestionScore}%</span>
+            <span className={styles.bannerScore} style={{ color }}>혼잡도 {score}%</span>
           </div>
         </div>
         <div className={styles.bannerDivider} />
@@ -86,7 +89,7 @@ export default function CongestionBanner({ districtName, congestionScore, top3, 
                 <span className={styles.bannerHeadlineLine1}>{districtName},</span>
                 지금 붐빕니다!
               </span>
-              <span className={styles.bannerScore} style={{ color }}>혼잡도 {congestionScore}%</span>
+              <span className={styles.bannerScore} style={{ color }}>혼잡도 {score}%</span>
             </div>
           </div>
           <div className={styles.bannerPopupDivider} />

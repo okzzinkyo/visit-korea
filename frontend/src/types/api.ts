@@ -1,7 +1,7 @@
 // 백엔드(/v3/api-docs) 스키마와 1:1 대응하는 응답 타입
 
 export interface CongestionResponse {
-  score: number;
+  score: number | null;
   levelCode: string;
   label: string;
 }
@@ -102,12 +102,12 @@ export interface PlaceCardResponse {
   districtName: string;
   imageUrl: string;
   last7DaysDetailViewCount: number;
-  last7DaysAverageCongestion: CongestionResponse;
+  todayCongestion: CongestionResponse;
 }
 
 export interface TodayCongestionResponse {
   date: string;
-  score: number;
+  score: number | null;
   levelCode: string;
   label: string;
 }
