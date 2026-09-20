@@ -115,7 +115,7 @@ export default function MainPage() {
                   여유롭게 즐기기 좋은 숨은 명소 2곳을 추천합니다.
                 </p>
                 <ul className={styles.infoBubbleList}>
-                  <li><b>선정 기준</b> 향후 30일간 평균 예측 혼잡률 최저 관광지 (동률 시 랜덤)</li>
+                  <li><b>선정 기준</b> 향후 30일간 평균 예측 혼잡도 최저 관광지 (동률 시 랜덤)</li>
                   <li><b>예측 기간</b> 오늘 ~ 30일 후 예측 데이터 기준</li>
                 </ul>
               </div>
