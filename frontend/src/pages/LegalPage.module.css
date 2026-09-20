@@ -1,0 +1,51 @@
+.page {
+  min-height: 100vh;
+  background: var(--bg-page, #f7f8fa);
+}
+
+.content {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.updatedAt {
+  font-size: 13px;
+  color: var(--color-sub);
+  margin: 0 0 32px;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #333;
+  margin: 0 0 4px;
+}
+
+.backLink {
+  display: inline-block;
+  margin-top: 24px;
+  font-size: 14px;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}

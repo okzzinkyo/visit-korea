@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Header from '../components/Header';
 import KakaoMap from '../components/KakaoMap';
@@ -131,11 +131,11 @@ export default function MainPage() {
 
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
-          <span className={styles.footerCopy}>© 2026 부산 눈치게임 — 부산광역시 관광 혼잡도 서비스</span>
+          <span className={styles.footerCopy}>© 2026 부산 눈치게임 — 부산 관광 혼잡도 예보 서비스</span>
           <div className={styles.footerLinks}>
-            <a href="#">이용약관</a>
-            <a href="#">개인정보처리방침</a>
-            <a href="#">오픈데이터 출처</a>
+            <Link to="/legal/terms">이용약관</Link>
+            <Link to="/legal/privacy">개인정보처리방침</Link>
+            <Link to="/legal/open-data">오픈데이터 출처</Link>
           </div>
         </div>
       </footer>

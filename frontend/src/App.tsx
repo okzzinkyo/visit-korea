@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import MainPage from './pages/MainPage';
 import ListPage from './pages/ListPage';
 import DetailPage from './pages/DetailPage';
+import LegalPage from './pages/LegalPage';
 
 const queryClient = new QueryClient();
 
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="/" element={<MainPage />} />
           <Route path="/list" element={<ListPage />} />
           <Route path="/detail/:spotId" element={<DetailPage />} />
+          <Route path="/legal/:slug" element={<LegalPage />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
