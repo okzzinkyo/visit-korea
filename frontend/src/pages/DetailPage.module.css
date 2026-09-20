@@ -108,18 +108,22 @@
   z-index: 5;
 }
 
-/* transform과 filter를 같은 요소에 같이 걸면 크롬이 이미지를 흐릿하게 리샘플링해서
-   회전은 래퍼로, drop-shadow는 img에 남겨 분리함 */
+/* filter: drop-shadow는 레티나 디스플레이에서 크롬이 이미지를 낮은 해상도로
+   리샘플링하는 문제가 있어 box-shadow로 대체 (스탬프가 원형이라 시각적으로 동일) */
 .levelStampImgWrap {
   width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  overflow: hidden;
   transform: rotate(-6deg);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
 }
 
 .levelStampImg {
-  width: 100%;
-  height: auto;
   display: block;
-  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.28));
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .levelStampScore {
@@ -640,15 +644,17 @@
   width: 42px;
   height: 42px;
   flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
   transform: rotate(-4deg);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
 }
 
 .alertBadge {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.18));
+  object-fit: cover;
 }
 
 .sectionTitleRow {
@@ -773,15 +779,17 @@
   right: 8px;
   width: 44px;
   height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
   transform: rotate(-4deg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .recCardLevelImg {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+  object-fit: cover;
 }
 
 .recCardInfo {

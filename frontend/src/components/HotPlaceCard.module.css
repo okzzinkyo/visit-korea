@@ -46,8 +46,8 @@
 }
 
 /* 혼잡도 스탬프 — 사진 모서리에 찍힌 것처럼 살짝 기울여 배치 (히어로 스탬프와 동일한 톤).
-   transform과 filter를 같은 요소에 같이 걸면 크롬이 이미지를 흐릿하게 리샘플링해서
-   회전은 래퍼로, drop-shadow는 img에 남겨 분리함 */
+   filter: drop-shadow는 레티나 디스플레이에서 크롬이 이미지를 낮은 해상도로
+   리샘플링하는 문제가 있어 box-shadow로 대체 (스탬프가 원형이라 시각적으로 동일) */
 .levelStampWrap {
   position: absolute;
   bottom: 6px;
@@ -55,7 +55,10 @@
   z-index: 2;
   width: 56px;
   height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
   transform: rotate(-6deg);
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
   transition: transform 0.22s;
 }
 
@@ -67,8 +70,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 3px 7px rgba(0, 0, 0, 0.3));
+  object-fit: cover;
 }
 
 .body {
