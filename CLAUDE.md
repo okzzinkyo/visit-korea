@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 "Visit Busan" (부산 눈치게임) — a Busan tourism congestion-visualization app. Shows district-level
 crowd congestion on a Kakao map, hot/hidden place recommendations, a searchable/filterable spot list,
 and per-spot congestion forecasts with festival overlays. The frontend talks to a real backend
-(`busan-timing-backend.onrender.com`) — this repo itself is still frontend-only (no backend code here).
+(`api.busan-nunchi.com`) — this repo itself is still frontend-only (no backend code here).
 
 The actual app lives in `frontend/` — always `cd frontend` before running commands.
 
@@ -26,9 +26,10 @@ There is no test runner configured in this project.
 
 `frontend/.env` holds `VITE_KAKAO_APP_KEY` (injected into `index.html` as `%VITE_KAKAO_APP_KEY%` for the
 Kakao Maps SDK `<script>` tag) and `VITE_API_BASE_URL` (the backend origin, currently
-`https://busan-timing-backend.onrender.com`, prefixed onto every `apiGet`/`apiPost` call). Vite env vars
-are the only config mechanism — there's no other env layer. Vercel deploys need the same two vars set
-under Project Settings → Environment Variables (they don't come from `.env`, which is local-only).
+`https://api.busan-nunchi.com`, prefixed onto every `apiGet`/`apiPost` call). Vite env vars
+are the only config mechanism — there's no other env layer. Production deploys (GitHub Actions →
+custom server via SSH/SCP, see `.github/workflows/`) need the same two vars set as repo secrets
+(they don't come from `.env`, which is local-only).
 
 ## Architecture
 
