@@ -38,11 +38,13 @@ export default function HotPlaceCard({ place }: Props) {
             {place.rank}위
           </span>
         )}
-        <img
-          src={getLevelImage(level)}
-          alt={getLevelLabel(level)}
-          className={styles.levelStampImg}
-        />
+        <span className={styles.levelStampWrap}>
+          <img
+            src={getLevelImage(level)}
+            alt={getLevelLabel(level)}
+            className={styles.levelStampImg}
+          />
+        </span>
       </div>
       <div className={styles.body}>
         <div>

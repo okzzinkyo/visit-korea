@@ -382,11 +382,13 @@ export default function DetailPage() {
                 <div className={styles.spotImageOverlay} />
               </div>
               <div className={styles.levelStamp}>
-                <img
-                  src={getLevelImage(level)}
-                  alt={getLevelLabel(level)}
-                  className={styles.levelStampImg}
-                />
+                <span className={styles.levelStampImgWrap}>
+                  <img
+                    src={getLevelImage(level)}
+                    alt={getLevelLabel(level)}
+                    className={styles.levelStampImg}
+                  />
+                </span>
                 {level > 0 && (
                   <span className={styles.levelStampScore} style={{ color: getLevelColor(level) }}>
                     {todayScore}%
@@ -569,11 +571,13 @@ export default function DetailPage() {
           return (
             <section className={styles.sectionAlt}>
               <div className={styles.alertBanner}>
-                <img
-                  src={getLevelImage(level)}
-                  alt={getLevelLabel(level)}
-                  className={styles.alertBadge}
-                />
+                <span className={styles.alertBadgeWrap}>
+                  <img
+                    src={getLevelImage(level)}
+                    alt={getLevelLabel(level)}
+                    className={styles.alertBadge}
+                  />
+                </span>
                 <span>{spot.name}{josaIGa(spot.name)} 혼잡해요 &mdash; 비슷한 분위기의 여유로운 곳을 추천해드립니다</span>
               </div>
               <div className={styles.sectionTitleRow}>
@@ -670,11 +674,13 @@ function RecCard({ spot, navigate }: {
           <span className={styles.recCardTag}>{spot.category}</span>
         )}
         {spot.level !== undefined && (
-          <img
-            src={getLevelImage(spot.level)}
-            alt={getLevelLabel(spot.level)}
-            className={styles.recCardLevelImg}
-          />
+          <span className={styles.recCardLevelImgWrap}>
+            <img
+              src={getLevelImage(spot.level)}
+              alt={getLevelLabel(spot.level)}
+              className={styles.recCardLevelImg}
+            />
+          </span>
         )}
       </div>
       <div className={styles.recCardInfo}>
